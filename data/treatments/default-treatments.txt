@@ -1,0 +1,74 @@
+# Default Dental Treatment Definitions
+# Format: <name> | <cost_INR> | <duration_minutes>
+
+TREE: General Dentistry
+  Consultation | 500 | 15
+  Scaling and Polishing | 1500 | 30
+  Filling | 2000 | 30
+    Composite Filling | 2000 | 30
+    GIC Filling | 1500 | 20
+    Silver Amalgam | 1000 | 20
+  Extraction | 1500 | 30
+    Simple Extraction | 1000 | 20
+    Surgical Extraction | 3000 | 45
+    Wisdom Tooth | 5000 | 60
+  Teeth Whitening | 8000 | 60
+    In-Office Whitening | 8000 | 60
+    Take-Home Kit | 5000 | 15
+
+TREE: Endodontics
+  Root Canal Treatment | 8000 | 60
+    Single Canal | 5000 | 45
+    Multi Canal | 8000 | 60
+    Re-treatment | 10000 | 90
+  Pulpotomy | 3000 | 30
+  Pulpectomy | 4000 | 45
+    Primary Tooth | 3000 | 30
+    Permanent Tooth | 5000 | 45
+  Apicoectomy | 12000 | 60
+
+TREE: Orthodontics
+  Metal Braces | 35000 | 45
+    Upper Arch Only | 20000 | 45
+    Lower Arch Only | 20000 | 45
+    Full Mouth | 35000 | 60
+  Ceramic Braces | 50000 | 45
+    Upper Arch | 30000 | 45
+    Full Mouth | 50000 | 60
+  Aligners | 150000 | 30
+    Single Arch | 80000 | 30
+    Both Arches | 150000 | 30
+  Retainers | 5000 | 20
+    Fixed Retainer | 3000 | 20
+    Removable Retainer | 5000 | 15
+
+TREE: Prosthodontics
+  Crown | 8000 | 45
+    PFM Crown | 6000 | 45
+    Zirconia Crown | 15000 | 45
+    E-max Crown | 12000 | 45
+  Bridge | 20000 | 60
+    3-Unit Bridge | 18000 | 60
+    Long Span Bridge | 30000 | 90
+  Dentures | 15000 | 60
+    Complete Denture | 15000 | 60
+    Partial Denture | 10000 | 45
+    Flexible Denture | 20000 | 45
+  Implant | 35000 | 90
+    Single Implant | 35000 | 90
+    Implant with Crown | 45000 | 120
+
+TREE: Periodontics
+  Deep Cleaning | 3000 | 45
+  Curettage | 2000 | 30
+  Flap Surgery | 8000 | 60
+  Bone Grafting | 15000 | 90
+  Gum Contouring | 5000 | 45
+
+TREE: Pediatric Dentistry
+  Child Consultation | 300 | 15
+  Fluoride Application | 500 | 15
+  Sealants | 800 | 20
+    Per Tooth | 800 | 20
+  Space Maintainer | 3000 | 30
+  Pulpectomy (Primary) | 2500 | 30

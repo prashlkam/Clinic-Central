@@ -1,0 +1,89 @@
+{
+  "name": "clinic-central",
+  "version": "1.0.0",
+  "description": "Dental Clinic Management Software",
+  "main": "electron-dist/main.js",
+  "scripts": {
+    "dev:renderer": "vite",
+    "dev:electron": "tsc -p tsconfig.electron.json && cross-env NODE_ENV=development electron electron-dist/main.js",
+    "dev": "npm run build:electron && concurrently \"npm run dev:renderer\" \"wait-on http://localhost:5173 && npm run dev:electron\"",
+    "copy:migrations": "mkdirp electron-dist/database/migrations && copyfiles -f electron/database/migrations/*.sql electron-dist/database/migrations",
+    "postbuild:electron": "npm run copy:migrations",
+    "build:renderer": "vite build",
+    "build:electron": "tsc -p tsconfig.electron.json",
+    "build": "npm run build:renderer && npm run build:electron",
+    "dist": "npm run build && electron-builder",
+    "start": "npm run build && electron electron-dist/main.js",
+    "postinstall": "electron-rebuild -f -w better-sqlite3"
+  },
+  "keywords": [
+    "clinic",
+    "dental",
+    "management"
+  ],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@electron/rebuild": "^4.0.3",
+    "@types/better-sqlite3": "^7.6.13",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "@types/uuid": "^10.0.0",
+    "@vitejs/plugin-react": "^6.0.1",
+    "concurrently": "^9.2.1",
+    "copyfiles": "^2.4.1",
+    "cross-env": "^10.1.0",
+    "electron": "^41.0.2",
+    "electron-builder": "^26.8.1",
+    "electron-rebuild": "^3.2.9",
+    "mkdirp": "^3.0.1",
+    "typescript": "^5.9.3",
+    "vite": "^8.0.0",
+    "wait-on": "^9.0.4"
+  },
+  "dependencies": {
+    "@ant-design/icons": "^6.1.0",
+    "antd": "^6.3.2",
+    "better-sqlite3": "^12.8.0",
+    "date-fns": "^4.1.0",
+    "dayjs": "^1.11.20",
+    "exceljs": "^4.4.0",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "react-router-dom": "^7.13.1",
+    "recharts": "^3.8.0",
+    "uuid": "^13.0.0",
+    "zod": "^4.3.6",
+    "zustand": "^5.0.11"
+  },
+  "build": {
+    "appId": "com.clinic-central.app",
+    "productName": "Clinic Central",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "electron-dist/**/*",
+      "node_modules/**/*"
+    ],
+    "extraResources": [
+      {
+        "from": "electron/database/migrations",
+        "to": "migrations"
+      },
+      {
+        "from": "data",
+        "to": "data"
+      }
+    ],
+    "win": {
+      "target": "nsis",
+      "icon": "resources/icon.png"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    }
+  }
+}
