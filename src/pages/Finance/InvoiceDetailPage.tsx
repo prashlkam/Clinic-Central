@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { Card, Descriptions, Table, Tag, Button, Space, Spin, message, Modal, Form, InputNumber, Select, DatePicker } from 'antd';
-import { ArrowLeftOutlined, PrinterOutlined, DollarOutlined } from '@ant-design/icons';
+import { Card, Descriptions, Table, Tag, Button, Space, Spin, message, Modal, Form, InputNumber, Select, DatePicker, Alert } from 'antd';
+import { ArrowLeftOutlined, PrinterOutlined, DollarOutlined, WalletOutlined } from '@ant-design/icons';
 import { useParams, useNavigate } from 'react-router-dom';
 import { invoicesApi, transactionsApi } from '../../api/finance.api';
 import { Invoice } from '../../types/finance.types';
@@ -17,6 +17,9 @@ const InvoiceDetailPage: React.FC = () => {
   const [invoice, setInvoice] = useState<Invoice | null>(null);
   const [loading, setLoading] = useState(true);
   const [paymentOpen, setPaymentOpen] = useState(false);
+  const [advanceModalOpen, setAdvanceModalOpen] = useState(false);
+  const [advanceBalance, setAdvanceBalance] = useState(0);
+  const [advanceForm] = Form.useForm();
   const [payForm] = Form.useForm();
 
   const fetchInvoice = () => {
@@ -31,7 +34,7 @@ const InvoiceDetailPage: React.FC = () => {
 
   const recordPayment = async () => {
     const values = await payForm.validateFields();
-    await transactionsApi.create({
+    const result = await transactionsApi.create({
       type: 'income',
       patient_id: invoice!.patient_id,
       invoice_id: invoice!.id,
@@ -41,9 +44,30 @@ const InvoiceDetailPage: React.FC = () => {
       reference_number: values.reference,
       category: 'Treatment Payment',
     });
-    message.success('Payment recorded');
+    if (result.advance_created > 0) {
+      message.success(`Payment recorded. ${formatINR(result.advance_created)} added to advance balance.`);
+    } else {
+      message.success('Payment recorded');
+    }
     setPaymentOpen(false);
     fetchInvoice();
+  };
+
+  const applyAdvance = async () => {
+    try {
+      const values = await advanceForm.validateFields();
+      await transactionsApi.applyAdvanceToInvoice({
+        patient_id: invoice!.patient_id,
+        invoice_id: invoice!.id,
+        amount_paise: Math.round(values.amount * 100),
+        transaction_date: dayjs().format('YYYY-MM-DD'),
+      });
+      message.success('Advance applied to invoice');
+      setAdvanceModalOpen(false);
+      fetchInvoice();
+    } catch (err: any) {
+      message.error(err?.message || 'Failed to apply advance');
+    }
   };
 
   if (loading) return <Spin size="large" style={{ display: 'block', margin: '100px auto' }} />;
@@ -69,11 +93,24 @@ const InvoiceDetailPage: React.FC = () => {
         <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/invoices')}>Back</Button>
         <Button icon={<PrinterOutlined />} onClick={() => window.print()}>Print</Button>
         {invoice.status !== 'paid' && invoice.status !== 'cancelled' && (
-          <Button type="primary" icon={<DollarOutlined />} onClick={() => {
-            payForm.resetFields();
-            payForm.setFieldsValue({ payment_method: 'cash', date: dayjs(), amount: (invoice.balance_paise || 0) / 100 });
-            setPaymentOpen(true);
-          }}>Record Payment</Button>
+          <>
+            <Button type="primary" icon={<DollarOutlined />} onClick={() => {
+              payForm.resetFields();
+              payForm.setFieldsValue({ payment_method: 'cash', date: dayjs(), amount: (invoice.balance_paise || 0) / 100 });
+              setPaymentOpen(true);
+            }}>Record Payment</Button>
+            <Button icon={<WalletOutlined />} onClick={async () => {
+              try {
+                const bal = await transactionsApi.getPatientAdvanceBalance(invoice.patient_id);
+                setAdvanceBalance(bal);
+                advanceForm.resetFields();
+                advanceForm.setFieldsValue({ amount: Math.min(bal, invoice.balance_paise || 0) / 100 });
+                setAdvanceModalOpen(true);
+              } catch (err: any) {
+                message.error(err?.message || 'Failed to fetch advance balance');
+              }
+            }}>Apply Advance</Button>
+          </>
         )}
       </Space>
 
@@ -146,6 +183,24 @@ const InvoiceDetailPage: React.FC = () => {
             <InputNumber style={{ width: '100%' }} />
           </Form.Item>
         </Form>
+      </Modal>
+
+      <Modal title="Apply Advance" open={advanceModalOpen} onCancel={() => setAdvanceModalOpen(false)} onOk={applyAdvance} destroyOnClose
+        okButtonProps={{ disabled: advanceBalance <= 0 }}>
+        {advanceBalance > 0 ? (
+          <Form form={advanceForm} layout="vertical">
+            <Alert
+              type="info"
+              message={`Patient has ${formatINR(advanceBalance)} available as advance balance`}
+              style={{ marginBottom: 16 }}
+            />
+            <Form.Item name="amount" label="Amount to Apply (₹)" rules={[{ required: true }]}>
+              <InputNumber min={0.01} max={Math.min(advanceBalance, invoice?.balance_paise || 0) / 100} precision={2} style={{ width: '100%' }} prefix="₹" />
+            </Form.Item>
+          </Form>
+        ) : (
+          <Alert type="warning" message="This patient has no advance balance available." />
+        )}
       </Modal>
     </div>
   );

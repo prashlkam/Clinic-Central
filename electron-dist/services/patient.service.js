@@ -9,18 +9,46 @@ exports.patientService = {
         const allowedSorts = ['first_name', 'last_name', 'phone_primary', 'created_at', 'city'];
         const sort = allowedSorts.includes(sortBy) ? sortBy : 'first_name';
         const order = sortOrder === 'desc' ? 'DESC' : 'ASC';
-        let where = 'WHERE is_active = 1';
+        let where = 'WHERE p.is_active = 1';
         const params = [];
         if (search) {
-            where += ` AND (first_name LIKE ? OR last_name LIKE ? OR phone_primary LIKE ? OR email LIKE ?)`;
+            where += ` AND (p.first_name LIKE ? OR p.last_name LIKE ? OR p.phone_primary LIKE ? OR p.email LIKE ?)`;
             const s = `%${search}%`;
             params.push(s, s, s, s);
         }
-        const countRow = db.prepare(`SELECT COUNT(*) as total FROM patients ${where}`).get(...params);
+        const countRow = db.prepare(`SELECT COUNT(*) as total FROM patients p ${where}`).get(...params);
         const total = countRow.total;
         const offset = (page - 1) * pageSize;
         params.push(pageSize, offset);
-        const rows = db.prepare(`SELECT * FROM patients ${where} ORDER BY ${sort} ${order} LIMIT ? OFFSET ?`).all(...params);
+        const rows = db.prepare(`
+      SELECT p.*,
+        COALESCE((
+          SELECT SUM(i.total_paise) FROM invoices i
+          WHERE i.patient_id = p.id AND i.status NOT IN ('cancelled', 'paid')
+        ), 0) - COALESCE((
+          SELECT SUM(t.amount_paise) FROM transactions t
+          JOIN invoices i ON i.id = t.invoice_id
+          WHERE i.patient_id = p.id AND i.status NOT IN ('cancelled', 'paid') AND t.type = 'income'
+        ), 0) as outstanding_paise,
+        COALESCE((
+          SELECT SUM(t.amount_paise) FROM transactions t
+          WHERE t.patient_id = p.id AND t.type = 'advance'
+        ), 0) + COALESCE((
+          SELECT SUM(CASE WHEN paid > total_paise THEN paid - total_paise ELSE 0 END) FROM (
+            SELECT inv.total_paise,
+              COALESCE((SELECT SUM(t2.amount_paise) FROM transactions t2
+                WHERE t2.invoice_id = inv.id AND t2.type = 'income'
+                AND (t2.category IS NULL OR t2.category != 'Advance Adjustment')), 0) as paid
+            FROM invoices inv WHERE inv.patient_id = p.id
+          )
+        ), 0) - COALESCE((
+          SELECT SUM(t.amount_paise) FROM transactions t
+          WHERE t.patient_id = p.id AND t.type = 'income' AND t.category = 'Advance Adjustment'
+        ), 0) as advance_balance_paise
+      FROM patients p
+      ${where}
+      ORDER BY p.${sort} ${order} LIMIT ? OFFSET ?
+    `).all(...params);
         return { data: rows, total, page, pageSize };
     },
     getById(id) {
@@ -51,7 +79,30 @@ exports.patientService = {
       SELECT COALESCE(SUM(t.amount_paise), 0) as total
       FROM transactions t
       JOIN invoices i ON i.id = t.invoice_id
-      WHERE i.patient_id = ? AND t.type = 'income'
+      WHERE i.patient_id = ? AND i.status NOT IN ('cancelled', 'paid') AND t.type = 'income'
+    `).get(id);
+        // Advance balance = direct advances + un-split overpayments - advances applied
+        const advances = db.prepare(`
+      SELECT COALESCE(SUM(amount_paise), 0) as total
+      FROM transactions WHERE patient_id = ? AND type = 'advance'
+    `).get(id);
+        const overpayments = db.prepare(`
+      SELECT COALESCE(SUM(
+        CASE WHEN paid > total_paise THEN paid - total_paise ELSE 0 END
+      ), 0) as total
+      FROM (
+        SELECT i.total_paise,
+          COALESCE((
+            SELECT SUM(t.amount_paise) FROM transactions t
+            WHERE t.invoice_id = i.id AND t.type = 'income'
+              AND (t.category IS NULL OR t.category != 'Advance Adjustment')
+          ), 0) as paid
+        FROM invoices i WHERE i.patient_id = ?
+      )
+    `).get(id);
+        const advancesUsed = db.prepare(`
+      SELECT COALESCE(SUM(amount_paise), 0) as total
+      FROM transactions WHERE patient_id = ? AND type = 'income' AND category = 'Advance Adjustment'
     `).get(id);
         return {
             ...patient,
@@ -59,6 +110,7 @@ exports.patientService = {
             next_treatment: nextAppt?.treatment_name || null,
             total_paid_paise: paid.total,
             outstanding_paise: invoiceTotal.total - paidAgainstInvoices.total,
+            advance_balance_paise: advances.total + overpayments.total - advancesUsed.total,
         };
     },
     create(data) {

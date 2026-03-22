@@ -87,11 +87,29 @@ export const reportService = {
       WHERE i.status NOT IN ('cancelled', 'paid') AND i.invoice_date <= ?
     `).get(asOfDate) as any;
 
-    // Advances received (liability - services not yet delivered)
-    const advances = db.prepare(`
+    // Advances received (liability - includes un-split overpayments)
+    const directAdv = db.prepare(`
       SELECT COALESCE(SUM(amount_paise), 0) as total
       FROM transactions WHERE type = 'advance' AND transaction_date <= ?
     `).get(asOfDate) as any;
+    const overpayAdv = db.prepare(`
+      SELECT COALESCE(SUM(
+        CASE WHEN paid > total_paise THEN paid - total_paise ELSE 0 END
+      ), 0) as total
+      FROM (
+        SELECT i.total_paise,
+          COALESCE((SELECT SUM(t.amount_paise) FROM transactions t
+            WHERE t.invoice_id = i.id AND t.type = 'income'
+            AND (t.category IS NULL OR t.category != 'Advance Adjustment')
+            AND t.transaction_date <= ?), 0) as paid
+        FROM invoices i WHERE i.invoice_date <= ?
+      )
+    `).get(asOfDate, asOfDate) as any;
+    const advUsed = db.prepare(`
+      SELECT COALESCE(SUM(amount_paise), 0) as total
+      FROM transactions WHERE type = 'income' AND category = 'Advance Adjustment' AND transaction_date <= ?
+    `).get(asOfDate) as any;
+    const advancesTotal = directAdv.total + overpayAdv.total - advUsed.total;
 
     return {
       assets: {
@@ -100,10 +118,10 @@ export const reportService = {
         total: cash.balance + receivables.total,
       },
       liabilities: {
-        advances: advances.total,
-        total: advances.total,
+        advances: advancesTotal,
+        total: advancesTotal,
       },
-      equity: cash.balance + receivables.total - advances.total,
+      equity: cash.balance + receivables.total - advancesTotal,
     };
   },
 
@@ -210,12 +228,33 @@ export const reportService = {
       "SELECT COUNT(*) as count FROM patients WHERE is_active = 1"
     ).get() as any;
 
+    // Total unspent advance balance across all patients (includes un-split overpayments)
+    const directAdvances = db.prepare(`
+      SELECT COALESCE(SUM(CASE WHEN type = 'advance' THEN amount_paise ELSE 0 END), 0) -
+        COALESCE(SUM(CASE WHEN type = 'income' AND category = 'Advance Adjustment' THEN amount_paise ELSE 0 END), 0) as total
+      FROM transactions
+    `).get() as any;
+    const overpaymentAdvances = db.prepare(`
+      SELECT COALESCE(SUM(
+        CASE WHEN paid > total_paise THEN paid - total_paise ELSE 0 END
+      ), 0) as total
+      FROM (
+        SELECT i.total_paise,
+          COALESCE((SELECT SUM(t.amount_paise) FROM transactions t
+            WHERE t.invoice_id = i.id AND t.type = 'income'
+            AND (t.category IS NULL OR t.category != 'Advance Adjustment')), 0) as paid
+        FROM invoices i
+      )
+    `).get() as any;
+    const totalAdvances = { total: directAdvances.total + overpaymentAdvances.total };
+
     return {
       todayAppointments: todayAppts.count,
       monthIncome: monthIncome.total,
       monthExpenses: monthExpenses.total,
       totalOutstanding: totalOutstanding.total,
       totalPatients: totalPatients.count,
+      totalAdvances: totalAdvances.total,
     };
   },
 };

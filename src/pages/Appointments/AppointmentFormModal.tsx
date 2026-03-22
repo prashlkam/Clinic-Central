@@ -9,7 +9,7 @@ interface Props {
   open: boolean;
   appointment?: Appointment | null;
   onClose: () => void;
-  onSave: (data: any) => void;
+  onSave: (data: any, meta?: { patient_name?: string; treatment_name?: string }) => void;
   loading?: boolean;
 }
 
@@ -34,10 +34,12 @@ const AppointmentFormModal: React.FC<Props> = ({ open, appointment, onClose, onS
 
   const handleOk = () => {
     form.validateFields().then(values => {
-      onSave({
-        ...values,
-        appointment_date: values.appointment_date.toISOString(),
-      });
+      const patient = patients.find(p => p.id === values.patient_id);
+      const patientName = patient ? `${patient.first_name} ${patient.last_name}` : undefined;
+      onSave(
+        { ...values, appointment_date: values.appointment_date.toISOString() },
+        { patient_name: patientName }
+      );
     });
   };
 

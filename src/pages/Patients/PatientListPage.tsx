@@ -4,18 +4,19 @@ import { PlusOutlined, SearchOutlined, ExportOutlined, ImportOutlined, DeleteOut
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { patientsApi } from '../../api/patients.api';
 import { excelApi } from '../../api/finance.api';
-import { Patient, PatientFilters } from '../../types/patient.types';
+import { PatientSummary, PatientFilters } from '../../types/patient.types';
+import { formatINR } from '../../styles/theme';
 import PatientFormModal from './PatientFormModal';
 
 const PatientListPage: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const [patients, setPatients] = useState<Patient[]>([]);
+  const [patients, setPatients] = useState<PatientSummary[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
   const [filters, setFilters] = useState<PatientFilters>({ page: 1, pageSize: 20 });
   const [modalOpen, setModalOpen] = useState(false);
-  const [editPatient, setEditPatient] = useState<Patient | null>(null);
+  const [editPatient, setEditPatient] = useState<PatientSummary | null>(null);
   const [saving, setSaving] = useState(false);
 
   const fetchPatients = useCallback(async () => {
@@ -55,7 +56,7 @@ const PatientListPage: React.FC = () => {
   const columns = [
     {
       title: '', width: 48,
-      render: (_: any, r: Patient) => (
+      render: (_: any, r: PatientSummary) => (
         <Avatar size="small" className="patient-avatar">
           {r.first_name[0]}{r.last_name?.[0] || ''}
         </Avatar>
@@ -63,7 +64,7 @@ const PatientListPage: React.FC = () => {
     },
     {
       title: 'Name', key: 'name', sorter: true,
-      render: (_: any, r: Patient) => `${r.first_name} ${r.last_name}`,
+      render: (_: any, r: PatientSummary) => `${r.first_name} ${r.last_name}`,
     },
     { title: 'Phone', dataIndex: 'phone_primary', width: 130 },
     { title: 'Email', dataIndex: 'email', width: 200 },
@@ -73,8 +74,20 @@ const PatientListPage: React.FC = () => {
       render: (d: string) => d ? new Date(d).toLocaleDateString('en-IN') : '',
     },
     {
+      title: 'Outstanding', dataIndex: 'outstanding_paise', width: 120, align: 'right' as const,
+      render: (v: number) => v > 0
+        ? <span style={{ color: '#dc2626', fontWeight: 500 }}>{formatINR(v)}</span>
+        : <span style={{ color: '#9ca3af' }}>{formatINR(0)}</span>,
+    },
+    {
+      title: 'Advance', dataIndex: 'advance_balance_paise', width: 120, align: 'right' as const,
+      render: (v: number) => v > 0
+        ? <span style={{ color: '#16a34a', fontWeight: 500 }}>{formatINR(v)}</span>
+        : <span style={{ color: '#9ca3af' }}>{formatINR(0)}</span>,
+    },
+    {
       title: 'Actions', width: 100, key: 'actions',
-      render: (_: any, r: Patient) => (
+      render: (_: any, r: PatientSummary) => (
         <Space>
           <Tooltip title="Edit">
             <Button size="small" icon={<EditOutlined />} onClick={(e) => {

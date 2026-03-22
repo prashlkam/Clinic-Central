@@ -16,6 +16,8 @@ function registerFinanceHandlers() {
     electron_1.ipcMain.handle('transactions:list', (_, filters) => transaction_service_1.transactionService.list(filters));
     electron_1.ipcMain.handle('transactions:create', (_, data) => transaction_service_1.transactionService.create(data));
     electron_1.ipcMain.handle('transactions:delete', (_, id) => transaction_service_1.transactionService.delete(id));
+    electron_1.ipcMain.handle('transactions:getPatientAdvanceBalance', (_, patientId) => transaction_service_1.transactionService.getPatientAdvanceBalance(patientId));
+    electron_1.ipcMain.handle('transactions:applyAdvanceToInvoice', (_, data) => transaction_service_1.transactionService.applyAdvanceToInvoice(data));
     electron_1.ipcMain.handle('transactions:getExpenseCategories', () => transaction_service_1.transactionService.getExpenseCategories());
     electron_1.ipcMain.handle('transactions:createExpenseCategory', (_, name) => transaction_service_1.transactionService.createExpenseCategory(name));
     // Reports

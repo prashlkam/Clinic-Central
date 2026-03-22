@@ -13,6 +13,7 @@ export function registerTreatmentHandlers() {
   ipcMain.handle('treatments:update', (_, id, data) => treatmentService.update(id, data));
   ipcMain.handle('treatments:delete', (_, id) => treatmentService.delete(id));
   ipcMain.handle('treatments:createTree', (_, name, desc) => treatmentService.createTree(name, desc));
+  ipcMain.handle('treatments:updateTree', (_, id, data) => treatmentService.updateTree(id, data));
   ipcMain.handle('treatments:deleteTree', (_, id) => treatmentService.deleteTree(id));
 
   ipcMain.handle('treatments:importFile', async (event) => {

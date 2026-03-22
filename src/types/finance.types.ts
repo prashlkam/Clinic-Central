@@ -71,4 +71,5 @@ export interface DashboardStats {
   monthExpenses: number;
   totalOutstanding: number;
   totalPatients: number;
+  totalAdvances: number;
 }

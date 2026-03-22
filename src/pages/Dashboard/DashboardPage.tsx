@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Card, Col, Row, Table, Button, Space, Tag } from 'antd';
 import {
   UserOutlined, CalendarOutlined, DollarOutlined,
-  WarningOutlined, PlusOutlined,
+  WarningOutlined, PlusOutlined, WalletOutlined,
 } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { reportsApi } from '../../api/finance.api';
@@ -67,32 +67,39 @@ const DashboardPage: React.FC = () => {
       </div>
 
       <Row gutter={[16, 16]}>
-        <Col xs={12} sm={6}>
+        <Col xs={12} sm={8}>
           <Card className="stat-card" loading={loading}>
             <div style={{ color: '#0891b2' }}><CalendarOutlined style={{ fontSize: 24 }} /></div>
             <div className="stat-value">{stats?.todayAppointments ?? 0}</div>
             <div className="stat-label">Today's Appointments</div>
           </Card>
         </Col>
-        <Col xs={12} sm={6}>
+        <Col xs={12} sm={8}>
           <Card className="stat-card" loading={loading}>
             <div style={{ color: '#16a34a' }}><DollarOutlined style={{ fontSize: 24 }} /></div>
             <div className="stat-value">{formatINRShort(stats?.monthIncome ?? 0)}</div>
             <div className="stat-label">This Month Income</div>
           </Card>
         </Col>
-        <Col xs={12} sm={6}>
+        <Col xs={12} sm={8}>
           <Card className="stat-card" loading={loading}>
             <div style={{ color: '#dc2626' }}><DollarOutlined style={{ fontSize: 24 }} /></div>
             <div className="stat-value">{formatINRShort(stats?.monthExpenses ?? 0)}</div>
             <div className="stat-label">This Month Expenses</div>
           </Card>
         </Col>
-        <Col xs={12} sm={6}>
+        <Col xs={12} sm={8}>
           <Card className="stat-card" loading={loading}>
             <div style={{ color: '#ea580c' }}><WarningOutlined style={{ fontSize: 24 }} /></div>
             <div className="stat-value">{formatINRShort(stats?.totalOutstanding ?? 0)}</div>
             <div className="stat-label">Outstanding</div>
+          </Card>
+        </Col>
+        <Col xs={12} sm={8}>
+          <Card className="stat-card" loading={loading}>
+            <div style={{ color: '#7c3aed' }}><WalletOutlined style={{ fontSize: 24 }} /></div>
+            <div className="stat-value">{formatINRShort(stats?.totalAdvances ?? 0)}</div>
+            <div className="stat-label">Advance Balance</div>
           </Card>
         </Col>
       </Row>

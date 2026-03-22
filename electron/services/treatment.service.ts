@@ -106,6 +106,20 @@ export const treatmentService = {
     return db.prepare("UPDATE treatments SET is_active = 0, updated_at = datetime('now') WHERE id = ?").run(id);
   },
 
+  updateTree(id: number, data: { name?: string; description?: string }) {
+    const db = getDatabase();
+    const fields: string[] = [];
+    const values: any[] = [];
+
+    if (data.name !== undefined) { fields.push('name = ?'); values.push(data.name); }
+    if (data.description !== undefined) { fields.push('description = ?'); values.push(data.description); }
+
+    if (fields.length === 0) return { changes: 0 };
+    values.push(id);
+
+    return db.prepare(`UPDATE treatment_trees SET ${fields.join(', ')} WHERE id = ?`).run(...values);
+  },
+
   createTree(name: string, description?: string) {
     const db = getDatabase();
     const result = db.prepare('INSERT INTO treatment_trees (name, description) VALUES (?, ?)').run(name, description || null);

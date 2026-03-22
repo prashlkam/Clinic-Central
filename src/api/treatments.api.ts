@@ -10,6 +10,7 @@ export const treatmentsApi = {
   update: (id: number, data: any) => invoke('treatments:update', id, data),
   delete: (id: number) => invoke('treatments:delete', id),
   createTree: (name: string, desc?: string) => invoke('treatments:createTree', name, desc),
+  updateTree: (id: number, data: { name?: string; description?: string }) => invoke('treatments:updateTree', id, data),
   deleteTree: (id: number) => invoke('treatments:deleteTree', id),
   importFile: () => invoke('treatments:importFile'),
   importContent: (content: string) => invoke('treatments:importContent', content),

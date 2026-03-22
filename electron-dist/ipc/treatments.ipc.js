@@ -18,6 +18,7 @@ function registerTreatmentHandlers() {
     electron_1.ipcMain.handle('treatments:update', (_, id, data) => treatment_service_1.treatmentService.update(id, data));
     electron_1.ipcMain.handle('treatments:delete', (_, id) => treatment_service_1.treatmentService.delete(id));
     electron_1.ipcMain.handle('treatments:createTree', (_, name, desc) => treatment_service_1.treatmentService.createTree(name, desc));
+    electron_1.ipcMain.handle('treatments:updateTree', (_, id, data) => treatment_service_1.treatmentService.updateTree(id, data));
     electron_1.ipcMain.handle('treatments:deleteTree', (_, id) => treatment_service_1.treatmentService.deleteTree(id));
     electron_1.ipcMain.handle('treatments:importFile', async (event) => {
         const result = await electron_1.dialog.showOpenDialog({

@@ -14,6 +14,8 @@ export const transactionsApi = {
   list: (filters?: TransactionFilters) => invoke('transactions:list', filters),
   create: (data: any) => invoke('transactions:create', data),
   delete: (id: number) => invoke('transactions:delete', id),
+  getPatientAdvanceBalance: (patientId: number) => invoke('transactions:getPatientAdvanceBalance', patientId),
+  applyAdvanceToInvoice: (data: any) => invoke('transactions:applyAdvanceToInvoice', data),
   getExpenseCategories: () => invoke('transactions:getExpenseCategories'),
   createExpenseCategory: (name: string) => invoke('transactions:createExpenseCategory', name),
 };

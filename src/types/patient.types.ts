@@ -24,6 +24,7 @@ export interface PatientSummary extends Patient {
   next_treatment?: string | null;
   total_paid_paise?: number;
   outstanding_paise?: number;
+  advance_balance_paise?: number;
 }
 
 export interface PatientFilters {

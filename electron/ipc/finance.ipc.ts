@@ -15,6 +15,8 @@ export function registerFinanceHandlers() {
   ipcMain.handle('transactions:list', (_, filters) => transactionService.list(filters));
   ipcMain.handle('transactions:create', (_, data) => transactionService.create(data));
   ipcMain.handle('transactions:delete', (_, id) => transactionService.delete(id));
+  ipcMain.handle('transactions:getPatientAdvanceBalance', (_, patientId) => transactionService.getPatientAdvanceBalance(patientId));
+  ipcMain.handle('transactions:applyAdvanceToInvoice', (_, data) => transactionService.applyAdvanceToInvoice(data));
   ipcMain.handle('transactions:getExpenseCategories', () => transactionService.getExpenseCategories());
   ipcMain.handle('transactions:createExpenseCategory', (_, name) => transactionService.createExpenseCategory(name));
 

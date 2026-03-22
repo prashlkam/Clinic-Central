@@ -12,6 +12,7 @@ const TreatmentListPage: React.FC = () => {
   const [formOpen, setFormOpen] = useState(false);
   const [editTreatment, setEditTreatment] = useState<Treatment | null>(null);
   const [treeFormOpen, setTreeFormOpen] = useState(false);
+  const [editTree, setEditTree] = useState<TreatmentTree | null>(null);
   const [form] = Form.useForm();
   const [treeForm] = Form.useForm();
   const [viewMode, setViewMode] = useState<'cards' | 'tree'>('cards');
@@ -69,12 +70,30 @@ const TreatmentListPage: React.FC = () => {
     if (selectedTree) selectTree(selectedTree.id);
   };
 
-  const handleCreateTree = async () => {
+  const handleSaveTree = async () => {
     const values = await treeForm.validateFields();
-    await treatmentsApi.createTree(values.name, values.description);
-    message.success('Category created');
+    if (editTree) {
+      await treatmentsApi.updateTree(editTree.id, { name: values.name, description: values.description });
+      message.success('Category updated');
+    } else {
+      await treatmentsApi.createTree(values.name, values.description);
+      message.success('Category created');
+    }
     setTreeFormOpen(false);
+    setEditTree(null);
     treeForm.resetFields();
+    fetchTrees();
+    if (editTree && selectedTree?.id === editTree.id) {
+      selectTree(editTree.id);
+    }
+  };
+
+  const handleDeleteTree = async (treeId: number) => {
+    await treatmentsApi.deleteTree(treeId);
+    message.success('Category deleted');
+    if (selectedTree?.id === treeId) {
+      setSelectedTree(null);
+    }
     fetchTrees();
   };
 
@@ -124,7 +143,11 @@ const TreatmentListPage: React.FC = () => {
             {viewMode === 'cards' ? 'Tree View' : 'Card View'}
           </Button>
           <Button icon={<UploadOutlined />} onClick={handleImport}>Import from File</Button>
-          <Button icon={<PlusOutlined />} onClick={() => setTreeFormOpen(true)}>New Category</Button>
+          <Button icon={<PlusOutlined />} onClick={() => {
+            setEditTree(null);
+            treeForm.resetFields();
+            setTreeFormOpen(true);
+          }}>New Category</Button>
           {selectedTree && (
             <Button type="primary" icon={<PlusOutlined />} onClick={() => {
               setEditTreatment(null);
@@ -138,13 +161,31 @@ const TreatmentListPage: React.FC = () => {
       {/* Category tabs */}
       <Space style={{ marginBottom: 16 }} wrap>
         {trees.map(t => (
-          <Button
-            key={t.id}
-            type={selectedTree?.id === t.id ? 'primary' : 'default'}
-            onClick={() => selectTree(t.id)}
-          >
-            {t.name}
-          </Button>
+          <Space.Compact key={t.id}>
+            <Button
+              type={selectedTree?.id === t.id ? 'primary' : 'default'}
+              onClick={() => selectTree(t.id)}
+            >
+              {t.name}
+            </Button>
+            <Button
+              size="middle"
+              icon={<EditOutlined />}
+              onClick={(e) => {
+                e.stopPropagation();
+                setEditTree(t);
+                treeForm.setFieldsValue({ name: t.name, description: t.description });
+                setTreeFormOpen(true);
+              }}
+            />
+            <Popconfirm
+              title="Delete this category?"
+              description="All treatments in this category will also be removed."
+              onConfirm={() => handleDeleteTree(t.id)}
+            >
+              <Button size="middle" danger icon={<DeleteOutlined />} />
+            </Popconfirm>
+          </Space.Compact>
         ))}
       </Space>
 
@@ -218,10 +259,10 @@ const TreatmentListPage: React.FC = () => {
 
       {/* Tree Category Form */}
       <Modal
-        title="New Treatment Category"
+        title={editTree ? 'Edit Category' : 'New Treatment Category'}
         open={treeFormOpen}
-        onCancel={() => setTreeFormOpen(false)}
-        onOk={handleCreateTree}
+        onCancel={() => { setTreeFormOpen(false); setEditTree(null); }}
+        onOk={handleSaveTree}
         destroyOnClose
       >
         <Form form={treeForm} layout="vertical">

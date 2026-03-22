@@ -78,7 +78,9 @@ export const invoiceService = {
     params.push(pageSize, offset);
 
     const rows = db.prepare(`
-      SELECT i.*, p.first_name || ' ' || p.last_name as patient_name
+      SELECT i.*, p.first_name || ' ' || p.last_name as patient_name,
+        COALESCE((SELECT SUM(t.amount_paise) FROM transactions t WHERE t.invoice_id = i.id AND t.type = 'income'), 0) as paid_paise,
+        i.total_paise - COALESCE((SELECT SUM(t.amount_paise) FROM transactions t WHERE t.invoice_id = i.id AND t.type = 'income'), 0) as balance_paise
       FROM invoices i
       LEFT JOIN patients p ON p.id = i.patient_id
       ${where}

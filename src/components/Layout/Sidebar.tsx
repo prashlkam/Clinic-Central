@@ -34,8 +34,8 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, onCollapse }) => {
       icon: <DollarOutlined />,
       label: 'Finance',
       children: [
-        { key: '/transactions', icon: <WalletOutlined />, label: 'Transactions' },
         { key: '/invoices', icon: <FileTextOutlined />, label: 'Invoices' },
+        { key: '/transactions', icon: <WalletOutlined />, label: 'Payments' },
         { key: '/expenses', icon: <DollarOutlined />, label: 'Expenses' },
         { key: '/reports', icon: <BarChartOutlined />, label: 'Reports' },
       ],

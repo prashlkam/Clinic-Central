@@ -1,11 +1,12 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { Table, Input, Button, Space, Tag, Select, DatePicker, message, Popconfirm, Tooltip } from 'antd';
-import { PlusOutlined, SearchOutlined, ExportOutlined, DeleteOutlined, EditOutlined, CheckOutlined } from '@ant-design/icons';
+import { PlusOutlined, SearchOutlined, ExportOutlined, DeleteOutlined, EditOutlined, CalendarOutlined } from '@ant-design/icons';
 import { useSearchParams } from 'react-router-dom';
 import { appointmentsApi } from '../../api/appointments.api';
 import { excelApi } from '../../api/finance.api';
 import { Appointment, AppointmentFilters } from '../../types/appointment.types';
 import AppointmentFormModal from './AppointmentFormModal';
+import CalendarSyncModal from '../../components/CalendarSync/CalendarSyncModal';
 import dayjs from 'dayjs';
 
 const { RangePicker } = DatePicker;
@@ -34,6 +35,8 @@ const AppointmentListPage: React.FC = () => {
   const [modalOpen, setModalOpen] = useState(false);
   const [editAppointment, setEditAppointment] = useState<Appointment | null>(null);
   const [saving, setSaving] = useState(false);
+  const [calendarSyncOpen, setCalendarSyncOpen] = useState(false);
+  const [syncAppointment, setSyncAppointment] = useState<any>(null);
 
   const fetchAppointments = useCallback(async () => {
     setLoading(true);
@@ -48,7 +51,7 @@ const AppointmentListPage: React.FC = () => {
     if (searchParams.get('new') === '1') setModalOpen(true);
   }, []);
 
-  const handleSave = async (data: any) => {
+  const handleSave = async (data: any, meta?: { patient_name?: string; treatment_name?: string }) => {
     setSaving(true);
     if (editAppointment) {
       await appointmentsApi.update(editAppointment.id, data);
@@ -61,6 +64,25 @@ const AppointmentListPage: React.FC = () => {
     setModalOpen(false);
     setEditAppointment(null);
     fetchAppointments();
+    setSyncAppointment({
+      patient_name: meta?.patient_name || editAppointment?.patient_name,
+      treatment_name: meta?.treatment_name || editAppointment?.treatment_name,
+      appointment_date: data.appointment_date,
+      duration_minutes: data.duration_minutes || 30,
+      notes: data.notes,
+    });
+    setCalendarSyncOpen(true);
+  };
+
+  const openCalendarSync = (appt: Appointment) => {
+    setSyncAppointment({
+      patient_name: appt.patient_name,
+      treatment_name: appt.treatment_name,
+      appointment_date: appt.appointment_date,
+      duration_minutes: appt.duration_minutes,
+      notes: appt.notes,
+    });
+    setCalendarSyncOpen(true);
   };
 
   const updateStatus = async (id: number, status: string) => {
@@ -100,9 +122,12 @@ const AppointmentListPage: React.FC = () => {
     },
     { title: 'Notes', dataIndex: 'notes', ellipsis: true },
     {
-      title: 'Actions', width: 100, key: 'actions',
+      title: 'Actions', width: 130, key: 'actions',
       render: (_: any, r: Appointment) => (
         <Space>
+          <Tooltip title="Sync to Calendar">
+            <Button size="small" icon={<CalendarOutlined />} onClick={() => openCalendarSync(r)} />
+          </Tooltip>
           <Tooltip title="Edit">
             <Button size="small" icon={<EditOutlined />} onClick={() => { setEditAppointment(r); setModalOpen(true); }} />
           </Tooltip>
@@ -175,6 +200,12 @@ const AppointmentListPage: React.FC = () => {
         onClose={() => { setModalOpen(false); setEditAppointment(null); }}
         onSave={handleSave}
         loading={saving}
+      />
+
+      <CalendarSyncModal
+        open={calendarSyncOpen}
+        onClose={() => { setCalendarSyncOpen(false); setSyncAppointment(null); }}
+        appointment={syncAppointment}
       />
     </div>
   );
