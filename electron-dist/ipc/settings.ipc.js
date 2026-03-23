@@ -51,5 +51,9 @@ function registerSettingsHandlers() {
         return { success: true, message: 'Backup restored. Please restart the application.' };
     });
     electron_1.ipcMain.handle('backup:lastInfo', () => backup_service_1.backupService.getLastBackupInfo());
+    electron_1.ipcMain.handle('backup:factoryReset', () => {
+        backup_service_1.backupService.factoryReset();
+        return { success: true, message: 'Factory reset complete. Please restart the application.' };
+    });
 }
 //# sourceMappingURL=settings.ipc.js.map

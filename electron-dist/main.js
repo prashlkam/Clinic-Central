@@ -13,6 +13,7 @@ const appointments_ipc_1 = require("./ipc/appointments.ipc");
 const finance_ipc_1 = require("./ipc/finance.ipc");
 const settings_ipc_1 = require("./ipc/settings.ipc");
 const excel_ipc_1 = require("./ipc/excel.ipc");
+const doctor_ipc_1 = require("./ipc/doctor.ipc");
 let mainWindow = null;
 function createWindow() {
     mainWindow = new electron_1.BrowserWindow({
@@ -52,6 +53,7 @@ electron_1.app.whenReady().then(() => {
     (0, finance_ipc_1.registerFinanceHandlers)();
     (0, settings_ipc_1.registerSettingsHandlers)();
     (0, excel_ipc_1.registerExcelHandlers)();
+    (0, doctor_ipc_1.registerDoctorHandlers)();
     electron_1.ipcMain.handle('app:version', () => electron_1.app.getVersion());
     createWindow();
     electron_1.app.on('activate', () => {

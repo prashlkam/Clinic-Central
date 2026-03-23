@@ -41,6 +41,7 @@ exports.appointmentService = {
       SELECT a.*,
         p.first_name || ' ' || p.last_name as patient_name,
         p.phone_primary as patient_phone,
+        p.email as patient_email,
         t.name as treatment_name
       FROM appointments a
       LEFT JOIN patients p ON p.id = a.patient_id
@@ -57,6 +58,7 @@ exports.appointmentService = {
       SELECT a.*,
         p.first_name || ' ' || p.last_name as patient_name,
         p.phone_primary as patient_phone,
+        p.email as patient_email,
         t.name as treatment_name,
         t.estimated_cost_paise
       FROM appointments a
@@ -100,6 +102,7 @@ exports.appointmentService = {
       SELECT a.*,
         p.first_name || ' ' || p.last_name as patient_name,
         p.phone_primary as patient_phone,
+        p.email as patient_email,
         t.name as treatment_name
       FROM appointments a
       LEFT JOIN patients p ON p.id = a.patient_id
@@ -116,6 +119,7 @@ exports.appointmentService = {
       SELECT a.*,
         p.first_name || ' ' || p.last_name as patient_name,
         p.phone_primary as patient_phone,
+        p.email as patient_email,
         t.name as treatment_name
       FROM appointments a
       LEFT JOIN patients p ON p.id = a.patient_id

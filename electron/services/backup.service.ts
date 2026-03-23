@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
-import { getDbPath } from '../database/connection';
-import { getDatabase } from '../database/connection';
+import { getDbPath, getDatabase, closeDatabase } from '../database/connection';
+import { runMigrations } from '../database/migrate';
 
 export const backupService = {
   createBackup(destinationDir: string): string {
@@ -57,5 +57,22 @@ export const backupService = {
     const db = getDatabase();
     const now = new Date().toISOString();
     db.prepare("INSERT OR REPLACE INTO settings (key, value) VALUES ('last_backup_date', ?)").run(now);
+  },
+
+  factoryReset(): boolean {
+    const dbPath = getDbPath();
+
+    // Close the current database connection
+    closeDatabase();
+
+    // Delete the database file and WAL/SHM files
+    if (fs.existsSync(dbPath)) fs.unlinkSync(dbPath);
+    if (fs.existsSync(dbPath + '-wal')) fs.unlinkSync(dbPath + '-wal');
+    if (fs.existsSync(dbPath + '-shm')) fs.unlinkSync(dbPath + '-shm');
+
+    // Re-initialize the database by running migrations (which recreates all tables and seeds default data)
+    runMigrations();
+
+    return true;
   },
 };

@@ -8,6 +8,7 @@ import { registerAppointmentHandlers } from './ipc/appointments.ipc';
 import { registerFinanceHandlers } from './ipc/finance.ipc';
 import { registerSettingsHandlers } from './ipc/settings.ipc';
 import { registerExcelHandlers } from './ipc/excel.ipc';
+import { registerDoctorHandlers } from './ipc/doctor.ipc';
 
 let mainWindow: BrowserWindow | null = null;
 
@@ -53,6 +54,7 @@ app.whenReady().then(() => {
   registerFinanceHandlers();
   registerSettingsHandlers();
   registerExcelHandlers();
+  registerDoctorHandlers();
 
   ipcMain.handle('app:version', () => app.getVersion());
 

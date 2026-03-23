@@ -7,7 +7,7 @@ exports.backupService = void 0;
 const fs_1 = __importDefault(require("fs"));
 const path_1 = __importDefault(require("path"));
 const connection_1 = require("../database/connection");
-const connection_2 = require("../database/connection");
+const migrate_1 = require("../database/migrate");
 exports.backupService = {
     createBackup(destinationDir) {
         const dbPath = (0, connection_1.getDbPath)();
@@ -15,7 +15,7 @@ exports.backupService = {
         const backupFileName = `clinic-central-backup-${timestamp}.db`;
         const backupPath = path_1.default.join(destinationDir, backupFileName);
         // Use SQLite backup API via VACUUM INTO for consistency
-        const db = (0, connection_2.getDatabase)();
+        const db = (0, connection_1.getDatabase)();
         db.exec(`VACUUM INTO '${backupPath.replace(/'/g, "''")}'`);
         return backupPath;
     },
@@ -41,7 +41,7 @@ exports.backupService = {
         return true;
     },
     getLastBackupInfo() {
-        const db = (0, connection_2.getDatabase)();
+        const db = (0, connection_1.getDatabase)();
         try {
             const setting = db.prepare("SELECT value FROM settings WHERE key = 'last_backup_date'").get();
             return setting?.value || null;
@@ -51,9 +51,24 @@ exports.backupService = {
         }
     },
     recordBackup() {
-        const db = (0, connection_2.getDatabase)();
+        const db = (0, connection_1.getDatabase)();
         const now = new Date().toISOString();
         db.prepare("INSERT OR REPLACE INTO settings (key, value) VALUES ('last_backup_date', ?)").run(now);
+    },
+    factoryReset() {
+        const dbPath = (0, connection_1.getDbPath)();
+        // Close the current database connection
+        (0, connection_1.closeDatabase)();
+        // Delete the database file and WAL/SHM files
+        if (fs_1.default.existsSync(dbPath))
+            fs_1.default.unlinkSync(dbPath);
+        if (fs_1.default.existsSync(dbPath + '-wal'))
+            fs_1.default.unlinkSync(dbPath + '-wal');
+        if (fs_1.default.existsSync(dbPath + '-shm'))
+            fs_1.default.unlinkSync(dbPath + '-shm');
+        // Re-initialize the database by running migrations (which recreates all tables and seeds default data)
+        (0, migrate_1.runMigrations)();
+        return true;
     },
 };
 //# sourceMappingURL=backup.service.js.map

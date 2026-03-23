@@ -56,4 +56,9 @@ export function registerSettingsHandlers() {
   });
 
   ipcMain.handle('backup:lastInfo', () => backupService.getLastBackupInfo());
+
+  ipcMain.handle('backup:factoryReset', () => {
+    backupService.factoryReset();
+    return { success: true, message: 'Factory reset complete. Please restart the application.' };
+  });
 }
