@@ -77,6 +77,7 @@ const AppointmentListPage: React.FC = () => {
   const openCalendarSync = (appt: Appointment) => {
     setSyncAppointment({
       patient_name: appt.patient_name,
+      patient_email: appt.patient_email,
       treatment_name: appt.treatment_name,
       appointment_date: appt.appointment_date,
       duration_minutes: appt.duration_minutes,

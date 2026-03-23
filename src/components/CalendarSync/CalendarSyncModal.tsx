@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Modal, Button, Space, Typography, Divider } from 'antd';
 import { GoogleOutlined, WindowsOutlined, CalendarOutlined, DownloadOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
+import { doctorApi } from '../../api/doctor.api';
 
 const { Text, Paragraph } = Typography;
 
@@ -10,6 +11,7 @@ interface CalendarSyncProps {
   onClose: () => void;
   appointment: {
     patient_name?: string;
+    patient_email?: string;
     treatment_name?: string;
     appointment_date: string;
     duration_minutes: number;
@@ -21,7 +23,7 @@ function formatDateForGoogle(date: string): string {
   return dayjs(date).format('YYYYMMDDTHHmmss');
 }
 
-function buildGoogleCalendarUrl(appt: CalendarSyncProps['appointment']): string {
+function buildGoogleCalendarUrl(appt: CalendarSyncProps['appointment'], doctorEmail?: string): string {
   if (!appt) return '';
   const start = formatDateForGoogle(appt.appointment_date);
   const end = formatDateForGoogle(
@@ -39,6 +41,11 @@ function buildGoogleCalendarUrl(appt: CalendarSyncProps['appointment']): string 
     dates: `${start}/${end}`,
     details,
   });
+
+  // Add attendees: doctor and patient
+  const attendees = [doctorEmail, appt.patient_email].filter(Boolean).join(',');
+  if (attendees) params.set('add', attendees);
+
   return `https://calendar.google.com/calendar/render?${params.toString()}`;
 }
 
@@ -63,7 +70,7 @@ function buildOutlookWebUrl(appt: CalendarSyncProps['appointment']): string {
   return `https://outlook.live.com/calendar/0/action/compose?${params.toString()}`;
 }
 
-function buildIcsContent(appt: CalendarSyncProps['appointment']): string {
+function buildIcsContent(appt: CalendarSyncProps['appointment'], doctorEmail?: string, doctorName?: string): string {
   if (!appt) return '';
   const start = dayjs(appt.appointment_date).format('YYYYMMDDTHHmmss');
   const end = dayjs(appt.appointment_date).add(appt.duration_minutes, 'minute').format('YYYYMMDDTHHmmss');
@@ -73,7 +80,7 @@ function buildIcsContent(appt: CalendarSyncProps['appointment']): string {
     appt.notes || '',
   ].filter(Boolean).join('\\n');
 
-  return [
+  const lines = [
     'BEGIN:VCALENDAR',
     'VERSION:2.0',
     'PRODID:-//ClinicCentral//Appointment//EN',
@@ -82,13 +89,22 @@ function buildIcsContent(appt: CalendarSyncProps['appointment']): string {
     `DTEND:${end}`,
     `SUMMARY:${title}`,
     `DESCRIPTION:${description}`,
-    'END:VEVENT',
-    'END:VCALENDAR',
-  ].join('\r\n');
+  ];
+
+  if (doctorEmail) {
+    lines.push(`ORGANIZER;CN=${doctorName || 'Doctor'}:mailto:${doctorEmail}`);
+    lines.push(`ATTENDEE;CN=${doctorName || 'Doctor'};ROLE=REQ-PARTICIPANT:mailto:${doctorEmail}`);
+  }
+  if (appt.patient_email) {
+    lines.push(`ATTENDEE;CN=${appt.patient_name || 'Patient'};ROLE=REQ-PARTICIPANT:mailto:${appt.patient_email}`);
+  }
+
+  lines.push('END:VEVENT', 'END:VCALENDAR');
+  return lines.join('\r\n');
 }
 
-function downloadIcsFile(appt: CalendarSyncProps['appointment']) {
-  const content = buildIcsContent(appt);
+function downloadIcsFile(appt: CalendarSyncProps['appointment'], doctorEmail?: string, doctorName?: string) {
+  const content = buildIcsContent(appt, doctorEmail, doctorName);
   const blob = new Blob([content], { type: 'text/calendar;charset=utf-8' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -101,6 +117,18 @@ function downloadIcsFile(appt: CalendarSyncProps['appointment']) {
 }
 
 const CalendarSyncModal: React.FC<CalendarSyncProps> = ({ open, onClose, appointment }) => {
+  const [doctorEmail, setDoctorEmail] = useState<string | undefined>();
+  const [doctorName, setDoctorName] = useState<string | undefined>();
+
+  useEffect(() => {
+    if (open) {
+      doctorApi.getProfile().then((profile: any) => {
+        if (profile?.email) setDoctorEmail(profile.email);
+        if (profile?.name) setDoctorName(profile.name);
+      });
+    }
+  }, [open]);
+
   if (!appointment) return null;
 
   const dateStr = dayjs(appointment.appointment_date).format('DD MMM YYYY, hh:mm A');
@@ -124,7 +152,7 @@ const CalendarSyncModal: React.FC<CalendarSyncProps> = ({ open, onClose, appoint
           block
           size="large"
           icon={<GoogleOutlined />}
-          onClick={() => window.open(buildGoogleCalendarUrl(appointment), '_blank')}
+          onClick={() => window.open(buildGoogleCalendarUrl(appointment, doctorEmail), '_blank')}
         >
           Add to Google Calendar
         </Button>
@@ -143,7 +171,7 @@ const CalendarSyncModal: React.FC<CalendarSyncProps> = ({ open, onClose, appoint
         <Button
           block
           icon={<DownloadOutlined />}
-          onClick={() => downloadIcsFile(appointment)}
+          onClick={() => downloadIcsFile(appointment, doctorEmail, doctorName)}
         >
           Download .ics file (Outlook / Apple Calendar)
         </Button>

@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { Card, Form, Input, Button, message, Space, Descriptions, Divider, Upload, Row, Col } from 'antd';
-import { SaveOutlined, CloudDownloadOutlined, CloudUploadOutlined, UploadOutlined } from '@ant-design/icons';
+import { Card, Form, Input, Button, message, Space, Descriptions, Divider, Upload, Row, Col, Modal } from 'antd';
+import { SaveOutlined, CloudDownloadOutlined, CloudUploadOutlined, UploadOutlined, ExclamationCircleOutlined, DeleteOutlined, UserOutlined } from '@ant-design/icons';
+import { useNavigate } from 'react-router-dom';
 import { settingsApi, backupApi } from '../../api/finance.api';
 import { treatmentsApi } from '../../api/treatments.api';
 
 const SettingsPage: React.FC = () => {
+  const navigate = useNavigate();
   const [form] = Form.useForm();
   const [lastBackup, setLastBackup] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -39,6 +41,28 @@ const SettingsPage: React.FC = () => {
     if (result?.success) {
       message.success(result.message);
     }
+  };
+
+  const handleFactoryReset = () => {
+    Modal.confirm({
+      title: 'Factory Reset',
+      icon: <ExclamationCircleOutlined />,
+      content: (
+        <div>
+          <p><strong>This will permanently erase ALL data</strong> including patients, appointments, invoices, transactions, treatments, and settings.</p>
+          <p>This action cannot be undone. It is recommended to create a backup before proceeding.</p>
+        </div>
+      ),
+      okText: 'Erase Everything',
+      okType: 'danger',
+      cancelText: 'Cancel',
+      onOk: async () => {
+        const result = await backupApi.factoryReset();
+        if (result?.success) {
+          message.success(result.message);
+        }
+      },
+    });
   };
 
   const handleImportTreatments = async () => {
@@ -86,7 +110,10 @@ const SettingsPage: React.FC = () => {
                   </Form.Item>
                 </Col>
               </Row>
-              <Button type="primary" icon={<SaveOutlined />} onClick={handleSave}>Save Settings</Button>
+              <Space>
+                <Button type="primary" icon={<SaveOutlined />} onClick={handleSave}>Save Settings</Button>
+                <Button icon={<UserOutlined />} onClick={() => navigate('/doctor-profile')}>Doctor's Profile</Button>
+              </Space>
             </Form>
           </Card>
         </Col>
@@ -117,6 +144,17 @@ const SettingsPage: React.FC = () => {
                 </Button>
                 <p style={{ color: '#888', fontSize: 12 }}>
                   Backup saves a copy of your database. Restore will replace all current data.
+                </p>
+              </Space>
+            </Card>
+
+            <Card title="Factory Reset">
+              <Space direction="vertical" style={{ width: '100%' }}>
+                <Button icon={<DeleteOutlined />} block danger type="primary" onClick={handleFactoryReset}>
+                  Factory Reset
+                </Button>
+                <p style={{ color: '#888', fontSize: 12 }}>
+                  Erases all data and restores the application to its original state. This cannot be undone.
                 </p>
               </Space>
             </Card>

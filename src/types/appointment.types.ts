@@ -12,6 +12,7 @@ export interface Appointment {
   patient_name?: string;
   treatment_name?: string;
   patient_phone?: string;
+  patient_email?: string;
   estimated_cost_paise?: number;
 }
 

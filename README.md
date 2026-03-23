@@ -316,4 +316,4 @@ TREE: Orthodontics
 
 ## License
 
-GPL - Ver 3.0
+ISC

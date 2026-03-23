@@ -49,4 +49,5 @@ export const backupApi = {
   create: () => invoke('backup:create'),
   restore: () => invoke('backup:restore'),
   lastInfo: () => invoke('backup:lastInfo'),
+  factoryReset: () => invoke('backup:factoryReset'),
 };
