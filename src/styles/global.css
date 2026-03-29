@@ -4,10 +4,27 @@
   box-sizing: border-box;
 }
 
+:root {
+  --bg-page: #f5f5f5;
+  --bg-card: #ffffff;
+  --text-primary: #000000;
+  --text-secondary: #666666;
+  --border-color: rgba(255,255,255,0.1);
+}
+
+[data-theme='dark'] {
+  --bg-page: #0f172a;
+  --bg-card: #1e293b;
+  --text-primary: #f1f5f9;
+  --text-secondary: #94a3b8;
+  --border-color: rgba(255,255,255,0.06);
+}
+
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   overflow: hidden;
+  background-color: var(--bg-page);
 }
 
 #root {
@@ -26,7 +43,7 @@ body {
   align-items: center;
   justify-content: center;
   padding: 16px;
-  border-bottom: 1px solid rgba(255,255,255,0.1);
+  border-bottom: 1px solid var(--border-color);
 }
 
 .sidebar-logo h2 {
@@ -37,12 +54,70 @@ body {
   overflow: hidden;
 }
 
-/* Content area */
+/* Content area - accounts for header height */
 .page-content {
   padding: 24px;
   overflow-y: auto;
   height: calc(100vh - 64px);
-  background: #f5f5f5;
+  background: var(--bg-page);
+  transition: background-color 0.3s ease;
+}
+
+/* Page content cards */
+.page-content .ant-card {
+  background: var(--bg-card);
+  color: var(--text-primary);
+}
+
+.page-content .ant-typography,
+.page-content h1,
+.page-content h2,
+.page-content h3,
+.page-content h4,
+.page-content h5 {
+  color: var(--text-primary);
+}
+
+.page-content .ant-descriptions-title,
+.page-content .ant-list-header,
+.page-content .ant-table-thead > tr > th {
+  color: var(--text-primary);
+}
+
+.page-content .ant-table {
+  background: var(--bg-card);
+}
+
+.page-content .ant-table-tbody > tr > td {
+  color: var(--text-primary);
+}
+
+.page-content .ant-table-thead > tr > th {
+  background: var(--bg-card);
+}
+
+.page-content .ant-pagination-item,
+.page-content .ant-pagination-prev,
+.page-content .ant-pagination-next {
+  background: var(--bg-card);
+}
+
+.page-content .ant-pagination-item a {
+  color: var(--text-primary);
+}
+
+.page-content .ant-tabs-nav {
+  color: var(--text-primary);
+}
+
+/* Sidebar footer for theme toggle */
+.sidebar-footer {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 8px;
+  border-top: 1px solid var(--border-color);
 }
 
 /* Dashboard stat cards */
@@ -64,7 +139,7 @@ body {
 
 .stat-label {
   font-size: 14px;
-  color: #666;
+  color: var(--text-secondary);
 }
 
 /* Treatment cards */
@@ -109,7 +184,7 @@ body {
 
 /* Scrollable table */
 .ant-table-wrapper {
-  background: white;
+  background: var(--bg-card);
   border-radius: 8px;
 }
 

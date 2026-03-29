@@ -1,5 +1,5 @@
 import React from 'react';
-import { Layout, Menu } from 'antd';
+import { Layout, Menu, Button } from 'antd';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
   DashboardOutlined,
@@ -11,7 +11,10 @@ import {
   BarChartOutlined,
   WalletOutlined,
   SettingOutlined,
+  MoonOutlined,
+  SunOutlined,
 } from '@ant-design/icons';
+import { useThemeStore } from '../../stores/themeStore';
 
 const { Sider } = Layout;
 
@@ -23,6 +26,7 @@ interface SidebarProps {
 const Sidebar: React.FC<SidebarProps> = ({ collapsed, onCollapse }) => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { isDarkMode, toggleTheme } = useThemeStore();
 
   const menuItems = [
     { key: '/', icon: <DashboardOutlined />, label: 'Dashboard' },
@@ -65,13 +69,18 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, onCollapse }) => {
       collapsed={collapsed}
       onCollapse={onCollapse}
       width={220}
-      theme="dark"
+      theme={isDarkMode ? 'dark' : 'light'}
+      style={{
+        background: isDarkMode ? '#001529' : '#ffffff',
+        transition: 'background-color 0.3s ease',
+      }}
     >
-      <div className="sidebar-logo">
-        <h2>{collapsed ? 'CC' : 'Clinic Central'}</h2>
+      <div className="sidebar-logo" style={{ borderBottomColor: isDarkMode ? 'rgba(255,255,255,0.1)' : '#e5e7eb' }}>
+        <h2 style={{ color: isDarkMode ? '#fff' : '#1f2937' }}>{collapsed ? 'CC' : 'Clinic Central'}</h2>
       </div>
       <Menu
-        theme="dark"
+        theme={isDarkMode ? 'dark' : 'light'}
+        style={{ background: 'transparent' }}
         mode="inline"
         selectedKeys={[getSelectedKey()]}
         defaultOpenKeys={['finance']}
@@ -80,6 +89,24 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, onCollapse }) => {
           if (key !== 'finance') navigate(key);
         }}
       />
+      <div className="sidebar-footer" style={{ borderTopColor: isDarkMode ? 'rgba(255,255,255,0.1)' : '#e5e7eb' }}>
+        <Button
+          type="text"
+          icon={isDarkMode ? <SunOutlined /> : <MoonOutlined />}
+          onClick={toggleTheme}
+          style={{
+            color: isDarkMode ? '#94a3b8' : '#4b5563',
+            width: '100%',
+            height: 40,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 8,
+          }}
+        >
+          {!collapsed && (isDarkMode ? 'Light Mode' : 'Dark Mode')}
+        </Button>
+      </div>
     </Sider>
   );
 };

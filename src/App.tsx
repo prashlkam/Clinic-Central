@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { HashRouter, Routes, Route } from 'react-router-dom';
 import { ConfigProvider } from 'antd';
-import { theme } from './styles/theme';
+import { lightTheme, darkTheme } from './styles/theme';
+import { useThemeStore } from './stores/themeStore';
 import AppShell from './components/Layout/AppShell';
 import DashboardPage from './pages/Dashboard/DashboardPage';
 import PatientListPage from './pages/Patients/PatientListPage';
@@ -19,8 +20,14 @@ import DoctorProfilePage from './pages/Doctor/DoctorProfilePage';
 import AuthGate from './components/Auth/AuthGate';
 
 const App: React.FC = () => {
+  const { isDarkMode } = useThemeStore();
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', isDarkMode ? 'dark' : 'light');
+  }, [isDarkMode]);
+
   return (
-    <ConfigProvider theme={theme}>
+    <ConfigProvider theme={isDarkMode ? darkTheme : lightTheme}>
       <AuthGate>
         <HashRouter>
           <Routes>
