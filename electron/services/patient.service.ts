@@ -1,4 +1,10 @@
 import { getDatabase } from '../database/connection';
+import { insertRow, updateRow } from '../database/helpers';
+
+const PATIENT_FIELDS = ['first_name', 'last_name', 'date_of_birth', 'gender', 'phone_primary',
+  'phone_secondary', 'email', 'address_line1', 'address_line2', 'city', 'state', 'pincode',
+  'medical_history', 'notes', 'blood_group', 'allergies', 'medical_conditions', 'current_medications',
+  'referred_by', 'membership_plan_id', 'membership_expiry'];
 
 export interface Patient {
   id: number;
@@ -16,6 +22,13 @@ export interface Patient {
   pincode: string | null;
   medical_history: string | null;
   notes: string | null;
+  blood_group?: string | null;
+  allergies?: string | null;
+  medical_conditions?: string | null;
+  current_medications?: string | null;
+  referred_by?: string | null;
+  membership_plan_id?: number | null;
+  membership_expiry?: string | null;
   is_active: number;
   created_at: string;
   updated_at: string;
@@ -95,7 +108,11 @@ export const patientService = {
 
   getById(id: number): PatientSummary | null {
     const db = getDatabase();
-    const patient = db.prepare('SELECT * FROM patients WHERE id = ?').get(id) as Patient | undefined;
+    const patient = db.prepare(`
+      SELECT p.*, m.name AS membership_name, m.discount_percent AS membership_discount_percent
+      FROM patients p LEFT JOIN membership_plans m ON m.id = p.membership_plan_id
+      WHERE p.id = ?
+    `).get(id) as Patient | undefined;
     if (!patient) return null;
 
     // Next appointment
@@ -160,48 +177,13 @@ export const patientService = {
     };
   },
 
-  create(data: Omit<Patient, 'id' | 'is_active' | 'created_at' | 'updated_at'>) {
-    const db = getDatabase();
-    const result = db.prepare(`
-      INSERT INTO patients (first_name, last_name, date_of_birth, gender, phone_primary,
-        phone_secondary, email, address_line1, address_line2, city, state, pincode,
-        medical_history, notes)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `).run(
-      data.first_name, data.last_name, data.date_of_birth, data.gender,
-      data.phone_primary, data.phone_secondary, data.email,
-      data.address_line1, data.address_line2, data.city, data.state, data.pincode,
-      data.medical_history, data.notes
-    );
-    return { id: result.lastInsertRowid };
+  create(data: Partial<Patient>) {
+    if (!data.first_name?.trim() || !data.phone_primary?.trim()) throw new Error('Name and phone are required');
+    return { id: insertRow('patients', { ...data, last_name: data.last_name ?? '' }, PATIENT_FIELDS) };
   },
 
   update(id: number, data: Partial<Patient>) {
-    const db = getDatabase();
-    const fields: string[] = [];
-    const values: any[] = [];
-
-    const allowed = ['first_name', 'last_name', 'date_of_birth', 'gender', 'phone_primary',
-      'phone_secondary', 'email', 'address_line1', 'address_line2', 'city', 'state',
-      'pincode', 'medical_history', 'notes'];
-
-    for (const key of allowed) {
-      if (key in data) {
-        fields.push(`${key} = ?`);
-        values.push((data as any)[key]);
-      }
-    }
-
-    if (fields.length === 0) return { changes: 0 };
-
-    fields.push("updated_at = datetime('now')");
-    values.push(id);
-
-    const result = db.prepare(
-      `UPDATE patients SET ${fields.join(', ')} WHERE id = ?`
-    ).run(...values);
-
-    return { changes: result.changes };
+    return { changes: updateRow('patients', id, data, PATIENT_FIELDS) };
   },
 
   softDelete(id: number) {

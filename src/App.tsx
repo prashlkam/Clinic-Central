@@ -18,6 +18,10 @@ import ReportsPage from './pages/Finance/ReportsPage';
 import SettingsPage from './pages/Settings/SettingsPage';
 import DoctorProfilePage from './pages/Doctor/DoctorProfilePage';
 import AuthGate from './components/Auth/AuthGate';
+import QueuePage from './pages/Queue/QueuePage';
+import LabOrdersPage from './pages/Lab/LabOrdersPage';
+import InventoryPage from './pages/Inventory/InventoryPage';
+import LibrariesPage from './pages/Libraries/LibrariesPage';
 
 const App: React.FC = () => {
   const { isDarkMode } = useThemeStore();
@@ -37,6 +41,10 @@ const App: React.FC = () => {
               <Route path="/patients/:id" element={<PatientDetailPage />} />
               <Route path="/treatments" element={<TreatmentListPage />} />
               <Route path="/appointments" element={<AppointmentListPage />} />
+              <Route path="/queue" element={<QueuePage />} />
+              <Route path="/lab-orders" element={<LabOrdersPage />} />
+              <Route path="/inventory" element={<InventoryPage />} />
+              <Route path="/libraries" element={<LibrariesPage />} />
               <Route path="/transactions" element={<TransactionListPage />} />
               <Route path="/invoices" element={<InvoicePage />} />
               <Route path="/invoices/new" element={<InvoiceFormPage />} />

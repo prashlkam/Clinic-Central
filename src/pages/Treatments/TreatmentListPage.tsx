@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Card, Row, Col, Button, Space, Tree, message, Modal, Form, Input, InputNumber, Tag, Popconfirm, Empty } from 'antd';
-import { PlusOutlined, UploadOutlined, DeleteOutlined, EditOutlined } from '@ant-design/icons';
+import { PlusOutlined, UploadOutlined, DeleteOutlined, EditOutlined, DownloadOutlined, ReloadOutlined } from '@ant-design/icons';
+import { errorText } from '../../api/clinic.api';
 import { treatmentsApi } from '../../api/treatments.api';
 import { TreatmentTree, Treatment } from '../../types/treatment.types';
 import { formatINR } from '../../styles/theme';
@@ -35,11 +36,35 @@ const TreatmentListPage: React.FC = () => {
     setSelectedTree(full);
   };
 
+  const reportImport = (result: any) => {
+    message.success(`Added ${result.treesCreated} categories and ${result.treatmentsCreated} treatments` +
+      (result.skipped ? ` (${result.skipped} already present, left unchanged)` : ''));
+    fetchTrees();
+  };
+
   const handleImport = async () => {
-    const result = await treatmentsApi.importFile();
-    if (result) {
-      message.success(`Imported ${result.treesCreated} trees, ${result.treatmentsCreated} treatments`);
-      fetchTrees();
+    try {
+      const result = await treatmentsApi.importFile();
+      if (result) reportImport(result);
+    } catch (err) {
+      Modal.error({ title: 'Could not import the treatment file', content: errorText(err) });
+    }
+  };
+
+  const handleLoadDefaults = async () => {
+    try {
+      reportImport(await treatmentsApi.loadDefaults());
+    } catch (err) {
+      Modal.error({ title: 'Could not load the default treatment list', content: errorText(err) });
+    }
+  };
+
+  const handleExport = async () => {
+    try {
+      const result = await treatmentsApi.exportFile();
+      if (result) message.success(`Treatment list saved to ${result.path}`);
+    } catch (err) {
+      message.error(errorText(err, 'Export failed'));
     }
   };
 
@@ -142,7 +167,11 @@ const TreatmentListPage: React.FC = () => {
           <Button onClick={() => setViewMode(v => v === 'cards' ? 'tree' : 'cards')}>
             {viewMode === 'cards' ? 'Tree View' : 'Card View'}
           </Button>
-          <Button icon={<UploadOutlined />} onClick={handleImport}>Import from File</Button>
+          <Popconfirm title="Add the default treatment list?" description="Missing default treatments are added. Your existing ones are not changed." onConfirm={handleLoadDefaults}>
+            <Button icon={<ReloadOutlined />}>Load Defaults</Button>
+          </Popconfirm>
+          <Button icon={<UploadOutlined />} onClick={handleImport}>Import JSON</Button>
+          <Button icon={<DownloadOutlined />} onClick={handleExport}>Export JSON</Button>
           <Button icon={<PlusOutlined />} onClick={() => {
             setEditTree(null);
             treeForm.resetFields();
@@ -189,7 +218,7 @@ const TreatmentListPage: React.FC = () => {
         ))}
       </Space>
 
-      {!selectedTree && <Empty description="No treatment categories. Import a treatment file or create a category." />}
+      {!selectedTree && <Empty description="No treatment categories. Use “Load Defaults”, import a JSON file, or create a category." />}
 
       {selectedTree && viewMode === 'cards' && (
         <Row gutter={[16, 16]}>

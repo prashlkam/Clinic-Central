@@ -4,6 +4,7 @@ import { ExportOutlined } from '@ant-design/icons';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import quarterOfYear from 'dayjs/plugin/quarterOfYear';
 import { reportsApi, excelApi } from '../../api/finance.api';
+import { analyticsApi } from '../../api/clinic.api';
 import { patientsApi } from '../../api/patients.api';
 import { ReportFilters } from '../../types/finance.types';
 import { formatINR } from '../../styles/theme';
@@ -27,6 +28,10 @@ const ReportsPage: React.FC = () => {
   const [receivables, setReceivables] = useState<any[]>([]);
   const [expenseBreakdown, setExpenseBreakdown] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState('pl');
+  const [procedures, setProcedures] = useState<any[]>([]);
+  const [trends, setTrends] = useState<any>({ periods: [], registered: 0 });
+  const [collections, setCollections] = useState<any>({ byMethod: [], byDay: [] });
+  const [apptStats, setApptStats] = useState<any[]>([]);
 
   useEffect(() => { patientsApi.getAll().then(setPatients); }, []);
 
@@ -35,6 +40,7 @@ const ReportsPage: React.FC = () => {
   }, [filters, activeTab]);
 
   const loadData = async () => {
+    const range = { startDate: filters.startDate, endDate: filters.endDate };
     if (activeTab === 'pl') {
       const data = await reportsApi.incomeStatement(filters);
       setIncomeData(data);
@@ -47,6 +53,14 @@ const ReportsPage: React.FC = () => {
     } else if (activeTab === 'expenses') {
       const data = await reportsApi.expenseBreakdown(filters);
       setExpenseBreakdown(data as any[]);
+    } else if (activeTab === 'procedures') {
+      setProcedures(await analyticsApi.procedureReport(range));
+    } else if (activeTab === 'patients') {
+      const [t, a] = await Promise.all([analyticsApi.patientTrends(range), analyticsApi.appointmentStats(range)]);
+      setTrends(t);
+      setApptStats(a);
+    } else if (activeTab === 'collections') {
+      setCollections(await analyticsApi.collections(range));
     }
   };
 
@@ -79,8 +93,8 @@ const ReportsPage: React.FC = () => {
   return (
     <div>
       <div className="page-header">
-        <h2>Financial Reports</h2>
-        <Button icon={<ExportOutlined />} onClick={async () => {
+        <h2>Reports</h2>
+        <Button icon={<ExportOutlined />} disabled={activeTab !== 'pl'} title={activeTab !== 'pl' ? 'Excel export is available for the Income Statement' : undefined} onClick={async () => {
           if (activeTab === 'pl' && incomeData) {
             await excelApi.exportReport(incomeData);
             message.success('Report exported');
@@ -207,6 +221,101 @@ const ReportsPage: React.FC = () => {
                 }}
               />
             </Card>
+          ),
+        },
+        {
+          key: 'collections',
+          label: 'Collections',
+          children: (
+            <Row gutter={16}>
+              <Col span={10}>
+                <Card title="By payment mode">
+                  <Table dataSource={collections.byMethod} rowKey="payment_method" pagination={false} size="small"
+                    columns={[
+                      { title: 'Mode', dataIndex: 'payment_method', render: (v: string) => v.replace('_', ' ').toUpperCase() },
+                      { title: 'Receipts', dataIndex: 'count', width: 90 },
+                      { title: 'Collected', dataIndex: 'total_paise', align: 'right', render: (v: number) => formatINR(v) },
+                    ]}
+                    summary={() => (
+                      <Table.Summary.Row>
+                        <Table.Summary.Cell index={0} colSpan={2}><strong>Total collected</strong></Table.Summary.Cell>
+                        <Table.Summary.Cell index={1} align="right"><strong>{formatINR(collections.byMethod.reduce((s: number, r: any) => s + r.total_paise, 0))}</strong></Table.Summary.Cell>
+                      </Table.Summary.Row>
+                    )} />
+                </Card>
+              </Col>
+              <Col span={14}>
+                <Card title="Daily collection">
+                  <Table dataSource={collections.byDay} rowKey="day" size="small" pagination={{ pageSize: 12, showSizeChanger: false }}
+                    columns={[
+                      { title: 'Date', dataIndex: 'day', render: (d: string) => new Date(d).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', weekday: 'short' }) },
+                      { title: 'Receipts', dataIndex: 'count', width: 90 },
+                      { title: 'Collected', dataIndex: 'total_paise', align: 'right', render: (v: number) => formatINR(v) },
+                    ]} />
+                </Card>
+              </Col>
+            </Row>
+          ),
+        },
+        {
+          key: 'procedures',
+          label: 'Procedure-wise',
+          children: (
+            <Card>
+              <Table dataSource={procedures} rowKey={(r: any) => `${r.category}|${r.procedure_name}`} size="small" pagination={{ pageSize: 20, showSizeChanger: false }}
+                columns={[
+                  { title: 'Procedure', dataIndex: 'procedure_name' },
+                  { title: 'Category', dataIndex: 'category', width: 200 },
+                  { title: 'Qty', dataIndex: 'quantity', width: 80, align: 'right' },
+                  { title: 'Invoices', dataIndex: 'invoices', width: 90, align: 'right' },
+                  { title: 'Billed', dataIndex: 'total_paise', width: 150, align: 'right', render: (v: number) => formatINR(v) },
+                ]}
+                summary={() => (
+                  <Table.Summary.Row>
+                    <Table.Summary.Cell index={0} colSpan={4} align="right"><strong>Total billed (before discounts and tax)</strong></Table.Summary.Cell>
+                    <Table.Summary.Cell index={1} align="right"><strong>{formatINR(procedures.reduce((s: number, r: any) => s + r.total_paise, 0))}</strong></Table.Summary.Cell>
+                  </Table.Summary.Row>
+                )} />
+            </Card>
+          ),
+        },
+        {
+          key: 'patients',
+          label: 'Patients & Visits',
+          children: (
+            <Row gutter={[16, 16]}>
+              <Col span={16}>
+                <Card title={`New vs returning patients (${trends.registered} registered in this period)`}>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <BarChart data={trends.periods}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="period" />
+                      <YAxis allowDecimals={false} />
+                      <RechartsTooltip />
+                      <Legend />
+                      <Bar dataKey="new_patients" name="New" stackId="p" fill="#0891b2" />
+                      <Bar dataKey="returning_patients" name="Returning" stackId="p" fill="#16a34a" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                  <Table dataSource={trends.periods} rowKey="period" size="small" pagination={false}
+                    columns={[
+                      { title: 'Month', dataIndex: 'period' },
+                      { title: 'New patients', dataIndex: 'new_patients', align: 'right' },
+                      { title: 'Returning patients', dataIndex: 'returning_patients', align: 'right' },
+                      { title: 'Total visits', dataIndex: 'visits', align: 'right' },
+                    ]} />
+                </Card>
+              </Col>
+              <Col span={8}>
+                <Card title="Appointments by outcome">
+                  <Table dataSource={apptStats} rowKey="status" size="small" pagination={false}
+                    columns={[
+                      { title: 'Status', dataIndex: 'status', render: (s: string) => <Tag>{s.replace('_', ' ')}</Tag> },
+                      { title: 'Count', dataIndex: 'count', align: 'right' },
+                    ]} />
+                </Card>
+              </Col>
+            </Row>
           ),
         },
         {

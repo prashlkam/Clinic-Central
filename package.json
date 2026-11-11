@@ -1,7 +1,7 @@
 {
   "name": "clinic-central",
   "version": "1.0.0",
-  "description": "Dental Clinic Management Software",
+  "description": "Dental clinic management software for a single-doctor clinic. Runs fully on the local computer.",
   "main": "electron-dist/main.js",
   "scripts": {
     "dev:renderer": "vite",
@@ -14,7 +14,13 @@
     "build": "npm run build:renderer && npm run build:electron",
     "dist": "npm run build && electron-builder",
     "start": "npm run build && electron electron-dist/main.js",
-    "postinstall": "electron-rebuild -f -w better-sqlite3"
+    "postinstall": "electron-rebuild -f -w better-sqlite3",
+    "launch": "electron .",
+    "desktop-shortcut": "npm run build && node scripts/create-desktop-shortcut.js",
+    "test:smoke": "npm run build:electron && electron scripts/smoke-test.js",
+    "make-icon": "node scripts/make-icon.js",
+    "dist:linux": "npm run build && electron-builder --linux",
+    "dist:win": "npm run build && electron-builder --win"
   },
   "keywords": [
     "clinic",
@@ -22,7 +28,7 @@
     "management"
   ],
   "author": "",
-  "license": "ISC",
+  "license": "GPL-3.0",
   "devDependencies": {
     "@electron/rebuild": "^4.0.3",
     "@types/better-sqlite3": "^7.6.13",
@@ -65,25 +71,45 @@
     "files": [
       "dist/**/*",
       "electron-dist/**/*",
-      "node_modules/**/*"
+      "package.json"
     ],
     "extraResources": [
       {
-        "from": "electron/database/migrations",
-        "to": "migrations"
-      },
-      {
         "from": "data",
         "to": "data"
+      },
+      {
+        "from": "resources/icon.png",
+        "to": "icon.png"
       }
     ],
     "win": {
       "target": "nsis",
-      "icon": "resources/icon.png"
+      "icon": "resources/icon.ico"
     },
     "nsis": {
       "oneClick": false,
-      "allowToChangeInstallationDirectory": true
-    }
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": "always",
+      "createStartMenuShortcut": true,
+      "shortcutName": "Clinic Central"
+    },
+    "linux": {
+      "target": [
+        "AppImage",
+        "deb"
+      ],
+      "icon": "resources/icon.png",
+      "category": "Office",
+      "executableName": "clinic-central",
+      "synopsis": "Dental clinic management"
+    },
+    "asarUnpack": [
+      "**/*.node"
+    ]
+  },
+  "allowScripts": {
+    "electron@41.0.2": true,
+    "better-sqlite3@12.8.0": true
   }
 }

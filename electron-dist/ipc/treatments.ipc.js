@@ -7,7 +7,8 @@ exports.registerTreatmentHandlers = registerTreatmentHandlers;
 const electron_1 = require("electron");
 const fs_1 = __importDefault(require("fs"));
 const treatment_service_1 = require("../services/treatment.service");
-const treatment_tree_parser_1 = require("../services/treatment-tree-parser");
+const treatment_json_1 = require("../services/treatment-json");
+const seed_1 = require("../database/seed");
 function registerTreatmentHandlers() {
     electron_1.ipcMain.handle('treatments:listTrees', () => treatment_service_1.treatmentService.listTrees());
     electron_1.ipcMain.handle('treatments:getTreeWithTreatments', (_, treeId) => treatment_service_1.treatmentService.getTreeWithTreatments(treeId));
@@ -23,17 +24,30 @@ function registerTreatmentHandlers() {
     electron_1.ipcMain.handle('treatments:importFile', async (event) => {
         const result = await electron_1.dialog.showOpenDialog({
             title: 'Import Treatment Definitions',
-            filters: [{ name: 'Text Files', extensions: ['txt'] }],
+            filters: [
+                { name: 'Treatment lists (JSON, or legacy TXT)', extensions: ['json', 'txt'] },
+            ],
             properties: ['openFile'],
         });
         if (result.canceled || result.filePaths.length === 0)
             return null;
         const content = fs_1.default.readFileSync(result.filePaths[0], 'utf-8');
-        return (0, treatment_tree_parser_1.importTreatmentTrees)(content);
+        return (0, treatment_json_1.importTreatmentContent)(content);
     });
-    electron_1.ipcMain.handle('treatments:importContent', (_, content) => {
-        return (0, treatment_tree_parser_1.importTreatmentTrees)(content);
+    electron_1.ipcMain.handle('treatments:importContent', (_, content) => (0, treatment_json_1.importTreatmentContent)(content));
+    electron_1.ipcMain.handle('treatments:exportFile', async () => {
+        const result = await electron_1.dialog.showSaveDialog({
+            title: 'Export Treatment List',
+            defaultPath: 'treatments.json',
+            filters: [{ name: 'JSON', extensions: ['json'] }],
+        });
+        if (result.canceled || !result.filePath)
+            return null;
+        const data = (0, treatment_json_1.exportTreatments)();
+        fs_1.default.writeFileSync(result.filePath, JSON.stringify(data, null, 2) + '\n', 'utf-8');
+        return { path: result.filePath, categories: data.categories.length };
     });
+    electron_1.ipcMain.handle('treatments:loadDefaults', () => (0, seed_1.loadDefaultTreatments)());
     electron_1.ipcMain.handle('treatments:clearAll', () => treatment_service_1.treatmentService.clearAll());
 }
 //# sourceMappingURL=treatments.ipc.js.map

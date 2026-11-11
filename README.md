@@ -1,19 +1,46 @@
 # Clinic Central
 
-A comprehensive desktop clinic management application built for small dental clinics in India. Manage patients, appointments, treatments, invoices, expenses, and financial reports — all from a single offline-first desktop app.
+A desktop clinic management application for a small dental clinic with a single main doctor, in India. Patients, clinical notes, dental chart, treatment plans, prescriptions, lab orders, consents, appointments and queue, invoices, expenses, inventory and reports — all in one app that runs **completely on your own computer**. No internet, no server, no account: double-click the desktop shortcut and work.
 
 ![Electron](https://img.shields.io/badge/Electron-41-47848F?logo=electron&logoColor=white)
 ![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=white)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178C6?logo=typescript&logoColor=white)
 ![SQLite](https://img.shields.io/badge/SQLite-Local-003B57?logo=sqlite&logoColor=white)
-![Platform](https://img.shields.io/badge/Platform-Windows-0078D6?logo=windows&logoColor=white)
+![Platform](https://img.shields.io/badge/Platform-Linux%20%7C%20Windows-0078D6)
 
 ---
 
 ## Features
 
+### Quick Start
+
+```bash
+npm install                 # once
+npm run desktop-shortcut    # builds the app and puts "Clinic Central" on your desktop
+```
+
+Then double-click **Clinic Central** on the desktop. See [Getting Started](#getting-started) for details.
+
+### Clinical Record (per patient)
+- **Clinical notes** for each visit: chief complaint, intraoral findings, radiograph observations, diagnosis, treatment done, advice, vitals, follow-up date
+- **Dental chart** (FDI numbering, permanent and milk teeth): condition, surfaces and notes per tooth
+- **Treatment plans** with stages, teeth and per-procedure status; printable estimate; create an invoice straight from the plan
+- **Prescriptions** from a drug library, reusable templates, repeat prescription, letterhead print; allergy warning while prescribing
+- **Lab orders**: lab, work type, material, teeth, shade, trial / due / received dates, status, overdue flag, lab charge booked as an expense
+- **Consent forms** from editable templates, signed on screen or printed for a pen signature
+- **Files & X-rays**: attach images and documents; they are copied into the app's own data folder
+
+### Reception
+- **Today's Queue**: check in arrivals (issues the next token), register walk-ins, call in, complete
+- Dashboard lists for follow-ups due, lab work due, low stock and birthdays
+
+### Inventory & Libraries
+- Stock items with stock-in / stock-out / count adjustment, movement history, reorder level and expiry
+- Libraries: drug library, prescription templates, consent templates, dental labs, membership plans
+- **Membership plans** with a bill-level discount applied in one click on the invoice
+
 ### Patient Management
-- Full patient records with contact info, medical history, and notes
+- Full patient records with contact info, blood group, allergies, medical conditions, current medication and notes
 - Search by name, phone, or email with real-time filtering
 - Patient detail view with appointment history, invoices, and financial ledger
 - Soft-delete support for data retention
@@ -21,7 +48,8 @@ A comprehensive desktop clinic management application built for small dental cli
 
 ### Treatment Catalog
 - Hierarchical treatment trees (e.g., Endodontics > Root Canal > Single Canal)
-- Import treatments from structured text files
+- Default treatment list shipped as **JSON** (`data/treatments/default-treatments.json`), loaded on first run
+- Import / export the treatment list as JSON; re-importing never creates duplicates
 - Configurable pricing (INR) and estimated duration per treatment
 - Two-step selection: pick a tree, then pick a treatment within it
 
@@ -30,14 +58,14 @@ A comprehensive desktop clinic management application built for small dental cli
 - Status workflow: Scheduled → Confirmed → In Progress → Completed / Cancelled / No-Show
 - Auto-fill duration from selected treatment
 - Today's appointments and upcoming appointments dashboard
-- Future: Google Calendar sync (OAuth 2.0, one-way push)
+- Export an appointment as an `.ics` calendar file
 
 ### Invoicing
 - Auto-numbered invoices by year (e.g., `INV-2025-0001`)
 - Line items from treatment catalog or manual entry
 - Discount and tax (GST) support
 - Status workflow: Draft → Sent → Partial → Paid → Cancelled
-- Print-ready invoice detail view with clinic branding
+- Letterhead invoice / receipt print (the print dialog can also save a PDF)
 
 ### Financial Tracking
 - Transaction types: Income, Expense, Advance, Refund
@@ -51,12 +79,14 @@ A comprehensive desktop clinic management application built for small dental cli
 - **Outstanding Receivables:** Per-patient unpaid balances with aging
 - **Expense Breakdown:** By category with pie chart visualization
 - **Patient Ledger:** Complete transaction history for any patient
+- **Collections:** By payment mode and by day
+- **Procedure-wise billing** and **new vs returning patients**
 - **Dashboard Stats:** Revenue, today's income, upcoming appointments, outstanding balance
 
 ### Data Management
 - **Excel Export:** Patients, appointments, invoices, transactions, and reports to `.xlsx` with INR formatting
 - **Excel Import:** Patients and transactions with column mapping, validation preview, and batch insert
-- **Backup/Restore:** Manual database backup via `VACUUM INTO`; restore with table validation
+- **Backup/Restore:** Automatic daily backup at startup (last 14 kept), manual backup of database + patient files to any folder, validated restore that first keeps a safety copy
 - **Settings:** Clinic info, GSTIN, invoice prefix/counter, backup path
 
 ---
@@ -65,7 +95,7 @@ A comprehensive desktop clinic management application built for small dental cli
 
 | Layer | Technology | Purpose |
 |-------|-----------|---------|
-| Desktop Framework | Electron 41 | Native Windows app with OS integration |
+| Desktop Framework | Electron 41 | Desktop app shell; owns the database and file access |
 | Frontend | React 19 + TypeScript 5.9 | Component-based UI with type safety |
 | UI Components | Ant Design 6 | Tables, forms, modals, calendar, icons |
 | Build Tool | Vite 8 | Fast dev server and production builds |
@@ -76,7 +106,7 @@ A comprehensive desktop clinic management application built for small dental cli
 | Excel | ExcelJS | Import/export `.xlsx` with formatting |
 | Validation | Zod 4 | Runtime + compile-time schema validation |
 | Dates | date-fns + dayjs | Date formatting and manipulation |
-| Installer | electron-builder | Windows NSIS installer |
+| Installer | electron-builder | AppImage / deb / Windows NSIS installer |
 
 ---
 
@@ -149,48 +179,49 @@ clinic-central/
 
 ### Prerequisites
 
-- **Node.js** 18+ (LTS recommended)
-- **npm** 9+
-- **Windows** 10/11 (primary target platform)
+- **Node.js** 20+ and **npm**
+- Linux or Windows 10/11 (macOS should work but is untested)
 
-### Installation
+### Install and create the desktop shortcut
 
 ```bash
-# Clone the repository
 git clone <repository-url>
-cd clinic-central
-
-# Install dependencies (also rebuilds better-sqlite3 for Electron)
+cd Clinic-Central
 npm install
+npm run desktop-shortcut
+```
+
+`npm run desktop-shortcut` builds the app and creates a **Clinic Central** shortcut on the desktop (and an
+applications-menu entry on Linux). From then on, start the app by double-clicking it. Nothing else needs to
+be running: the app loads its screens from disk and keeps its data in a local SQLite file.
+
+- Run `npm run desktop-shortcut` again after pulling a new version of the code.
+- `npm run desktop-shortcut -- --remove` removes the shortcut.
+- The shortcut points at this folder, so do not move or delete the folder afterwards (re-run the command if you do).
+- On some Linux desktops the first double-click asks you to "Allow launching" / "Trust" the shortcut.
+- `npm install` must be allowed to run the install scripts of `electron` (downloads the Electron program)
+  and `better-sqlite3` (the database driver). Newer npm versions block dependency install scripts by
+  default; this project approves exactly those two in `package.json` → `allowScripts`.
+
+### First run
+
+1. Register the doctor (name, qualification, registration number, password).
+2. Fill in the clinic details under **Settings** — they appear on every printed prescription, invoice, estimate and consent.
+3. The default treatments, drug library and consent templates are already loaded. Adjust them under **Treatments** and **Libraries**.
+
+### Installer for another computer (optional)
+
+```bash
+npm run dist:linux   # AppImage + .deb in release/
+npm run dist:win     # NSIS installer with a desktop shortcut (run on Windows)
 ```
 
 ### Development
 
 ```bash
-# Start dev mode (Vite dev server + Electron with hot reload)
-npm run dev
+npm run dev          # Vite dev server + Electron with hot reload
+npm run test:smoke   # backend test on a throw-away database
 ```
-
-This starts Vite on `http://localhost:5173` and launches Electron once the dev server is ready.
-
-### Production Build
-
-```bash
-# Build both renderer and electron
-npm run build
-
-# Test the production build locally
-npm run start
-```
-
-### Create Installer
-
-```bash
-# Build and package as Windows NSIS installer
-npm run dist
-```
-
-The installer is output to the `release/` directory.
 
 ---
 
@@ -200,11 +231,16 @@ The installer is output to the `release/` directory.
 
 The SQLite database is stored at:
 
-```
-%APPDATA%/clinic-central/clinic-central.db
-```
+| OS | Folder |
+|----|--------|
+| Linux | `~/.config/clinic-central/` |
+| Windows | `%APPDATA%\clinic-central\` |
 
-It is created automatically on first launch. Migrations run on startup.
+- `clinic-central.db` — all records
+- `patient-files/` — attached X-rays, photos and documents
+- `backups/` — automatic daily backups and safety copies
+
+It is created automatically on first launch. Migrations run on startup; an existing database is snapshotted to `backups/` before it is upgraded. **Settings → Where your data lives** shows and opens the folder.
 
 ### Schema Overview
 
@@ -219,7 +255,14 @@ It is created automatically on first launch. Migrations run on startup.
 | `transactions` | All financial transactions (income, expense, advance, refund) |
 | `expense_categories` | Hierarchical expense categories |
 | `settings` | Key-value configuration store |
-| `sync_queue` | Future Google Calendar sync queue |
+| `clinical_notes`, `tooth_chart` | Visit notes and dental chart |
+| `treatment_plans`, `treatment_plan_items` | Staged treatment plans |
+| `medicines`, `prescriptions`, `prescription_items`, `prescription_templates` | Drug library and prescriptions |
+| `labs`, `lab_orders` | Dental labs and lab work |
+| `consent_templates`, `patient_consents` | Consent forms |
+| `patient_files` | Attachment records |
+| `inventory_items`, `inventory_movements` | Stock |
+| `membership_plans` | Discount programmes |
 | `schema_migrations` | Applied migration tracking |
 
 ### Currency Handling
@@ -252,27 +295,43 @@ Renderer (React)  ──→  preload.ts (contextBridge)  ──→  Main Process
 - **SQLite with WAL mode:** Fast reads, safe concurrent access within the app.
 - **Paise-based currency:** Integer arithmetic eliminates rounding errors for financial data.
 - **Service layer separation:** IPC handlers delegate to services, keeping business logic testable and decoupled.
-- **Zod validation:** Runtime type checking at system boundaries (user input, IPC calls).
 
 ---
 
-## Treatment Import Format
+## Treatment List Format (JSON)
 
-Treatments can be bulk-imported from a structured text file:
+The default list is `data/treatments/default-treatments.json`. The same format is used by **Import JSON** and
+**Export JSON** on the Treatments page.
 
+```json
+{
+  "version": 1,
+  "currency": "INR",
+  "categories": [
+    {
+      "name": "Endodontics",
+      "treatments": [
+        {
+          "name": "Root Canal Treatment", "cost": 8000, "duration": 60,
+          "children": [
+            { "name": "Single Canal", "cost": 5000, "duration": 45 },
+            { "name": "Multi Canal", "cost": 8000, "duration": 60 }
+          ]
+        },
+        { "name": "Pulpotomy", "cost": 3000, "duration": 30 }
+      ]
+    }
+  ]
+}
 ```
-TREE: Endodontics
-  Root Canal Treatment | 8000 | 60
-    Single Canal | 5000 | 45
-    Multi Canal | 8000 | 60
-  Pulpotomy | 3000 | 30
 
-TREE: Orthodontics
-  Metal Braces | 35000 | 45
-    Full Mouth | 35000 | 60
-```
+`cost` is in rupees, `duration` in minutes (default 30), and `children` can nest to any depth. A malformed
+file is rejected with a message saying what is wrong; nothing is imported from it. Treatments that already
+exist are left unchanged. Older indented `.txt` lists can still be imported.
 
-**Format:** Indentation (2 spaces) defines hierarchy. Each line: `name | cost_INR | duration_minutes`. Lines starting with `#` are comments.
+The drug library (`data/medicines/default-medicines.json`) and consent templates
+(`data/consents/default-consent-templates.json`) are JSON too. They are starting points: review the
+dosage defaults and the consent wording for your own practice.
 
 ---
 
@@ -290,27 +349,25 @@ TREE: Orthodontics
 
 | Script | Description |
 |--------|-------------|
-| `npm run dev` | Start development mode (Vite + Electron) |
-| `npm run build` | Build renderer and electron for production |
-| `npm run start` | Build and launch the production app |
-| `npm run dist` | Build and create Windows NSIS installer |
-| `npm run dev:renderer` | Start Vite dev server only |
-| `npm run dev:electron` | Build and launch Electron only |
-| `npm run build:renderer` | Build React app with Vite |
-| `npm run build:electron` | Compile Electron TypeScript |
-| `npm run copy:migrations` | Copy SQL migrations to build output |
-| `npm run postinstall` | Rebuild native modules for Electron |
+| `npm run desktop-shortcut` | Build and create the desktop shortcut |
+| `npm run launch` | Start the already-built app |
+| `npm run start` | Build and start the app |
+| `npm run build` | Build renderer and main process |
+| `npm run dev` | Development mode (Vite + Electron, hot reload) |
+| `npm run test:smoke` | Backend smoke test on a temporary database |
+| `npm run dist:linux` / `npm run dist:win` | Build an installable package into `release/` |
+| `npm run make-icon` | Regenerate `resources/icon.png` and `icon.ico` |
 
 ---
 
-## Roadmap
+## Troubleshooting
 
-- [ ] Google Calendar sync (OAuth 2.0, one-way push)
-- [ ] SMS/WhatsApp appointment reminders
-- [ ] Multi-user authentication
-- [ ] Cloud backup (AWS S3 or similar)
-- [ ] Advanced analytics and KPI tracking
-- [ ] Predictive no-show analysis
+- **"The application has not been built yet"** — run `npm run build` (or `npm run desktop-shortcut`) once.
+- **"Electron failed to install correctly"** — the Electron download was skipped; run `npm install` again and make sure install scripts for `electron` are allowed.
+- **Shortcut does nothing on Linux** — mark it as trusted ("Allow launching"), and check that the project folder has not moved.
+- **Forgot which folder holds the data** — Settings → *Where your data lives* → Open data folder.
+
+See [Plan.md](Plan.md) for the build plan, the feature mapping and what is still open.
 
 ---
 

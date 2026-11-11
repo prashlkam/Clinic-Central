@@ -48,12 +48,24 @@ function registerSettingsHandlers() {
         if (result.canceled || result.filePaths.length === 0)
             return null;
         backup_service_1.backupService.restoreBackup(result.filePaths[0]);
-        return { success: true, message: 'Backup restored. Please restart the application.' };
+        return { success: true, message: 'Backup restored.' };
     });
     electron_1.ipcMain.handle('backup:lastInfo', () => backup_service_1.backupService.getLastBackupInfo());
+    electron_1.ipcMain.handle('backup:status', () => backup_service_1.backupService.getStatus());
+    electron_1.ipcMain.handle('backup:chooseAutoDir', async () => {
+        const result = await electron_1.dialog.showOpenDialog({
+            title: 'Folder for automatic daily backups',
+            properties: ['openDirectory', 'createDirectory'],
+        });
+        if (result.canceled || result.filePaths.length === 0)
+            return null;
+        const db = (0, connection_1.getDatabase)();
+        db.prepare("INSERT OR REPLACE INTO settings (key, value) VALUES ('backup_path', ?)").run(result.filePaths[0]);
+        return { path: result.filePaths[0] };
+    });
     electron_1.ipcMain.handle('backup:factoryReset', () => {
         backup_service_1.backupService.factoryReset();
-        return { success: true, message: 'Factory reset complete. Please restart the application.' };
+        return { success: true, message: 'Factory reset complete.' };
     });
 }
 //# sourceMappingURL=settings.ipc.js.map

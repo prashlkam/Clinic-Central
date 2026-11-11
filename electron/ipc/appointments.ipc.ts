@@ -9,4 +9,7 @@ export function registerAppointmentHandlers() {
   ipcMain.handle('appointments:delete', (_, id) => appointmentService.delete(id));
   ipcMain.handle('appointments:getUpcoming', (_, limit) => appointmentService.getUpcoming(limit));
   ipcMain.handle('appointments:getTodays', () => appointmentService.getTodaysAppointments());
+  ipcMain.handle('appointments:getQueue', (_, date) => appointmentService.getQueue(date));
+  ipcMain.handle('appointments:checkIn', (_, id) => appointmentService.checkIn(id));
+  ipcMain.handle('appointments:walkIn', (_, data) => appointmentService.walkIn(data));
 }

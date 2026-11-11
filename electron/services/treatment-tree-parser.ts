@@ -1,13 +1,14 @@
-import { getDatabase } from '../database/connection';
+// Legacy indentation-based text format (kept so old .txt files can still be imported).
+// The default treatment list and the preferred import/export format is JSON: see treatment-json.ts
 
-interface ParsedTreatment {
+export interface ParsedTreatment {
   name: string;
   cost: number;
   duration: number;
   depth: number;
 }
 
-interface ParsedTree {
+export interface ParsedTree {
   name: string;
   treatments: ParsedTreatment[];
 }
@@ -45,56 +46,4 @@ export function parseTreatmentFile(content: string): ParsedTree[] {
   }
 
   return trees;
-}
-
-export function importTreatmentTrees(content: string): { treesCreated: number; treatmentsCreated: number } {
-  const db = getDatabase();
-  const parsed = parseTreatmentFile(content);
-
-  let treesCreated = 0;
-  let treatmentsCreated = 0;
-
-  const insertTree = db.prepare('INSERT OR IGNORE INTO treatment_trees (name) VALUES (?)');
-  const getTreeId = db.prepare('SELECT id FROM treatment_trees WHERE name = ?');
-  const insertTreatment = db.prepare(`
-    INSERT INTO treatments (tree_id, parent_id, name, estimated_cost_paise, duration_minutes, sort_order)
-    VALUES (?, ?, ?, ?, ?, ?)
-  `);
-
-  const transaction = db.transaction(() => {
-    for (const tree of parsed) {
-      insertTree.run(tree.name);
-      const treeRow = getTreeId.get(tree.name) as any;
-      const treeId = treeRow.id;
-      treesCreated++;
-
-      // Stack: depth -> last inserted ID at that depth
-      const stack: Map<number, number> = new Map();
-
-      for (let i = 0; i < tree.treatments.length; i++) {
-        const t = tree.treatments[i];
-        let parentId: number | null = null;
-
-        if (t.depth > 0) {
-          parentId = stack.get(t.depth - 1) || null;
-        }
-
-        const result = insertTreatment.run(
-          treeId,
-          parentId,
-          t.name,
-          t.cost * 100, // Convert INR to paise
-          t.duration,
-          i
-        );
-
-        stack.set(t.depth, Number(result.lastInsertRowid));
-        treatmentsCreated++;
-      }
-    }
-  });
-
-  transaction();
-
-  return { treesCreated, treatmentsCreated };
 }

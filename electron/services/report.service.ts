@@ -1,4 +1,5 @@
 import { getDatabase } from '../database/connection';
+import { localDate, localDayRange } from '../database/helpers';
 
 export interface ReportFilters {
   startDate: string;
@@ -192,14 +193,14 @@ export const reportService = {
   getDashboardStats() {
     const db = getDatabase();
 
-    const today = new Date().toISOString().split('T')[0];
+    const today = localDate();
     const monthStart = today.substring(0, 7) + '-01';
 
     const todayAppts = db.prepare(`
       SELECT COUNT(*) as count FROM appointments
-      WHERE date(appointment_date) = date('now')
+      WHERE appointment_date >= ? AND appointment_date < ?
         AND status NOT IN ('cancelled', 'no_show')
-    `).get() as any;
+    `).get(...localDayRange()) as any;
 
     const monthIncome = db.prepare(`
       SELECT COALESCE(SUM(amount_paise), 0) as total

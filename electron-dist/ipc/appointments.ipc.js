@@ -11,5 +11,8 @@ function registerAppointmentHandlers() {
     electron_1.ipcMain.handle('appointments:delete', (_, id) => appointment_service_1.appointmentService.delete(id));
     electron_1.ipcMain.handle('appointments:getUpcoming', (_, limit) => appointment_service_1.appointmentService.getUpcoming(limit));
     electron_1.ipcMain.handle('appointments:getTodays', () => appointment_service_1.appointmentService.getTodaysAppointments());
+    electron_1.ipcMain.handle('appointments:getQueue', (_, date) => appointment_service_1.appointmentService.getQueue(date));
+    electron_1.ipcMain.handle('appointments:checkIn', (_, id) => appointment_service_1.appointmentService.checkIn(id));
+    electron_1.ipcMain.handle('appointments:walkIn', (_, data) => appointment_service_1.appointmentService.walkIn(data));
 }
 //# sourceMappingURL=appointments.ipc.js.map

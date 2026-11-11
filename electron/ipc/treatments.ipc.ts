@@ -1,7 +1,8 @@
 import { ipcMain, dialog } from 'electron';
 import fs from 'fs';
 import { treatmentService } from '../services/treatment.service';
-import { importTreatmentTrees } from '../services/treatment-tree-parser';
+import { importTreatmentContent, exportTreatments } from '../services/treatment-json';
+import { loadDefaultTreatments } from '../database/seed';
 
 export function registerTreatmentHandlers() {
   ipcMain.handle('treatments:listTrees', () => treatmentService.listTrees());
@@ -19,19 +20,33 @@ export function registerTreatmentHandlers() {
   ipcMain.handle('treatments:importFile', async (event) => {
     const result = await dialog.showOpenDialog({
       title: 'Import Treatment Definitions',
-      filters: [{ name: 'Text Files', extensions: ['txt'] }],
+      filters: [
+        { name: 'Treatment lists (JSON, or legacy TXT)', extensions: ['json', 'txt'] },
+      ],
       properties: ['openFile'],
     });
 
     if (result.canceled || result.filePaths.length === 0) return null;
 
     const content = fs.readFileSync(result.filePaths[0], 'utf-8');
-    return importTreatmentTrees(content);
+    return importTreatmentContent(content);
   });
 
-  ipcMain.handle('treatments:importContent', (_, content: string) => {
-    return importTreatmentTrees(content);
+  ipcMain.handle('treatments:importContent', (_, content: string) => importTreatmentContent(content));
+
+  ipcMain.handle('treatments:exportFile', async () => {
+    const result = await dialog.showSaveDialog({
+      title: 'Export Treatment List',
+      defaultPath: 'treatments.json',
+      filters: [{ name: 'JSON', extensions: ['json'] }],
+    });
+    if (result.canceled || !result.filePath) return null;
+    const data = exportTreatments();
+    fs.writeFileSync(result.filePath, JSON.stringify(data, null, 2) + '\n', 'utf-8');
+    return { path: result.filePath, categories: data.categories.length };
   });
+
+  ipcMain.handle('treatments:loadDefaults', () => loadDefaultTreatments());
 
   ipcMain.handle('treatments:clearAll', () => treatmentService.clearAll());
 }

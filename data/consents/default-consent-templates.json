@@ -1,0 +1,26 @@
+{
+  "version": 1,
+  "description": "Default consent form templates. Placeholders: {{patient_name}}, {{date}}, {{doctor_name}}, {{clinic_name}}, {{procedure}}. Have the wording reviewed for your own practice before use.",
+  "templates": [
+    {
+      "name": "General Dental Treatment",
+      "body": "I, {{patient_name}}, consent to dental examination and treatment ({{procedure}}) by {{doctor_name}} at {{clinic_name}}.\n\nThe nature of the treatment, its expected benefits, the possible risks and the available alternatives (including no treatment) have been explained to me in a language I understand, and my questions have been answered.\n\nI understand that dentistry is not an exact science and that no guarantee of outcome has been given. I have disclosed my complete medical history, current medication and known allergies.\n\nI agree to follow the post-treatment instructions given to me and to pay the fees discussed.\n\nDate: {{date}}"
+    },
+    {
+      "name": "Tooth Extraction",
+      "body": "I, {{patient_name}}, consent to the extraction of the tooth/teeth described as: {{procedure}}, to be carried out by {{doctor_name}} at {{clinic_name}}.\n\nI have been informed of the alternatives to extraction and of the possible risks, including pain, swelling, bleeding, infection, dry socket, damage to adjacent teeth or fillings, jaw stiffness, temporary or rarely permanent numbness of the lip, chin or tongue, sinus involvement for upper teeth, and the possible need for further treatment.\n\nI consent to the use of local anaesthesia and have disclosed my medical history, medication and allergies.\n\nDate: {{date}}"
+    },
+    {
+      "name": "Root Canal Treatment",
+      "body": "I, {{patient_name}}, consent to root canal treatment ({{procedure}}) by {{doctor_name}} at {{clinic_name}}.\n\nI understand that the treatment may need more than one visit and that risks include post-operative pain or swelling, instrument separation inside the canal, perforation, missed or blocked canals, failure of the treatment requiring re-treatment, surgery or extraction, and fracture of the tooth. I have been advised that a crown is usually required after root canal treatment and that it is charged separately.\n\nI consent to the use of local anaesthesia and have disclosed my medical history, medication and allergies.\n\nDate: {{date}}"
+    },
+    {
+      "name": "Dental Implant",
+      "body": "I, {{patient_name}}, consent to dental implant treatment ({{procedure}}) by {{doctor_name}} at {{clinic_name}}.\n\nThe surgical procedure, healing period, prosthetic phase, costs and alternatives (bridge, denture, no replacement) have been explained to me. I understand the risks include pain, swelling, bleeding, infection, injury to nerves causing numbness, sinus involvement, failure of the implant to integrate with bone, and the need for bone grafting or additional procedures. I understand that smoking, diabetes and poor oral hygiene reduce the success of implants and that regular follow-up is required.\n\nDate: {{date}}"
+    },
+    {
+      "name": "Orthodontic Treatment",
+      "body": "I, {{patient_name}} (or parent/guardian), consent to orthodontic treatment ({{procedure}}) by {{doctor_name}} at {{clinic_name}}.\n\nI understand that treatment time is an estimate and depends on my co-operation, that regular visits and good oral hygiene are essential, and that risks include tooth decay or white spots around braces, gum inflammation, root shortening, discomfort, and relapse if retainers are not worn as advised. The fee and payment schedule have been explained to me.\n\nDate: {{date}}"
+    }
+  ]
+}

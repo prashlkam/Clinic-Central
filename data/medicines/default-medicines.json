@@ -1,0 +1,29 @@
+{
+  "version": 1,
+  "description": "Default drug library. Dosage defaults are prefilled suggestions only; the prescribing doctor must review every prescription.",
+  "medicines": [
+    { "name": "Amoxicillin", "form": "Capsule", "strength": "500 mg", "frequency": "1-1-1", "duration": "5 days", "instructions": "After food" },
+    { "name": "Amoxicillin + Clavulanic Acid", "form": "Tablet", "strength": "625 mg", "frequency": "1-0-1", "duration": "5 days", "instructions": "After food" },
+    { "name": "Azithromycin", "form": "Tablet", "strength": "500 mg", "frequency": "1-0-0", "duration": "3 days", "instructions": "After food" },
+    { "name": "Metronidazole", "form": "Tablet", "strength": "400 mg", "frequency": "1-1-1", "duration": "5 days", "instructions": "After food" },
+    { "name": "Clindamycin", "form": "Capsule", "strength": "300 mg", "frequency": "1-1-1", "duration": "5 days", "instructions": "After food, with plenty of water" },
+    { "name": "Ofloxacin + Ornidazole", "form": "Tablet", "strength": "200 mg + 500 mg", "frequency": "1-0-1", "duration": "5 days", "instructions": "After food" },
+    { "name": "Paracetamol", "form": "Tablet", "strength": "500 mg", "frequency": "1-1-1", "duration": "3 days", "instructions": "After food, if pain or fever" },
+    { "name": "Paracetamol", "form": "Tablet", "strength": "650 mg", "frequency": "1-1-1", "duration": "3 days", "instructions": "After food, if pain or fever" },
+    { "name": "Ibuprofen", "form": "Tablet", "strength": "400 mg", "frequency": "1-1-1", "duration": "3 days", "instructions": "After food" },
+    { "name": "Aceclofenac + Paracetamol", "form": "Tablet", "strength": "100 mg + 325 mg", "frequency": "1-0-1", "duration": "3 days", "instructions": "After food" },
+    { "name": "Diclofenac", "form": "Tablet", "strength": "50 mg", "frequency": "1-0-1", "duration": "3 days", "instructions": "After food" },
+    { "name": "Ketorolac", "form": "Dispersible Tablet", "strength": "10 mg", "frequency": "SOS", "duration": "2 days", "instructions": "Only for severe pain, after food" },
+    { "name": "Serratiopeptidase", "form": "Tablet", "strength": "10 mg", "frequency": "1-0-1", "duration": "5 days", "instructions": "After food" },
+    { "name": "Pantoprazole", "form": "Tablet", "strength": "40 mg", "frequency": "1-0-0", "duration": "5 days", "instructions": "Before breakfast" },
+    { "name": "Cetirizine", "form": "Tablet", "strength": "10 mg", "frequency": "0-0-1", "duration": "3 days", "instructions": "At bedtime" },
+    { "name": "Vitamin B Complex", "form": "Capsule", "strength": "", "frequency": "1-0-0", "duration": "15 days", "instructions": "After food" },
+    { "name": "Chlorhexidine Mouthwash", "form": "Mouthwash", "strength": "0.2%", "frequency": "1-0-1", "duration": "7 days", "instructions": "Rinse 10 ml for 30 seconds, do not swallow" },
+    { "name": "Povidone Iodine Gargle", "form": "Gargle", "strength": "2%", "frequency": "1-1-1", "duration": "5 days", "instructions": "Dilute and gargle, do not swallow" },
+    { "name": "Sodium Fluoride Mouthwash", "form": "Mouthwash", "strength": "0.05%", "frequency": "0-0-1", "duration": "30 days", "instructions": "Rinse at bedtime, do not swallow" },
+    { "name": "Benzocaine Gel", "form": "Gel", "strength": "20%", "frequency": "SOS", "duration": "5 days", "instructions": "Apply on affected area" },
+    { "name": "Triamcinolone Oral Paste", "form": "Paste", "strength": "0.1%", "frequency": "1-1-1", "duration": "5 days", "instructions": "Apply on ulcer after meals" },
+    { "name": "Metronidazole + Chlorhexidine Gel", "form": "Gel", "strength": "", "frequency": "1-0-1", "duration": "7 days", "instructions": "Massage on gums after brushing" },
+    { "name": "Potassium Nitrate Toothpaste", "form": "Toothpaste", "strength": "5%", "frequency": "1-0-1", "duration": "30 days", "instructions": "Use for brushing; for sensitivity" }
+  ]
+}

@@ -52,13 +52,25 @@ export function registerSettingsHandlers() {
     if (result.canceled || result.filePaths.length === 0) return null;
 
     backupService.restoreBackup(result.filePaths[0]);
-    return { success: true, message: 'Backup restored. Please restart the application.' };
+    return { success: true, message: 'Backup restored.' };
   });
 
   ipcMain.handle('backup:lastInfo', () => backupService.getLastBackupInfo());
+  ipcMain.handle('backup:status', () => backupService.getStatus());
+
+  ipcMain.handle('backup:chooseAutoDir', async () => {
+    const result = await dialog.showOpenDialog({
+      title: 'Folder for automatic daily backups',
+      properties: ['openDirectory', 'createDirectory'],
+    });
+    if (result.canceled || result.filePaths.length === 0) return null;
+    const db = getDatabase();
+    db.prepare("INSERT OR REPLACE INTO settings (key, value) VALUES ('backup_path', ?)").run(result.filePaths[0]);
+    return { path: result.filePaths[0] };
+  });
 
   ipcMain.handle('backup:factoryReset', () => {
     backupService.factoryReset();
-    return { success: true, message: 'Factory reset complete. Please restart the application.' };
+    return { success: true, message: 'Factory reset complete.' };
   });
 }

@@ -6,6 +6,7 @@ import { invoicesApi, transactionsApi } from '../../api/finance.api';
 import { Invoice } from '../../types/finance.types';
 import { formatINR } from '../../styles/theme';
 import dayjs from 'dayjs';
+import PrintPreview, { fmtDate } from '../../components/Print/PrintPreview';
 
 const statusColors: Record<string, string> = {
   draft: 'default', sent: 'blue', partial: 'orange', paid: 'green', cancelled: 'red',
@@ -21,6 +22,7 @@ const InvoiceDetailPage: React.FC = () => {
   const [advanceBalance, setAdvanceBalance] = useState(0);
   const [advanceForm] = Form.useForm();
   const [payForm] = Form.useForm();
+  const [printOpen, setPrintOpen] = useState(false);
 
   const fetchInvoice = () => {
     if (!id) return;
@@ -91,7 +93,7 @@ const InvoiceDetailPage: React.FC = () => {
     <div>
       <Space style={{ marginBottom: 16 }}>
         <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/invoices')}>Back</Button>
-        <Button icon={<PrinterOutlined />} onClick={() => window.print()}>Print</Button>
+        <Button icon={<PrinterOutlined />} onClick={() => setPrintOpen(true)}>Print</Button>
         {invoice.status !== 'paid' && invoice.status !== 'cancelled' && (
           <>
             <Button type="primary" icon={<DollarOutlined />} onClick={() => {
@@ -163,6 +165,46 @@ const InvoiceDetailPage: React.FC = () => {
           </>
         )}
       </Card>
+
+      <PrintPreview open={printOpen} title={invoice.status === 'paid' ? 'Invoice / Receipt' : 'Invoice'} onClose={() => setPrintOpen(false)}
+        meta={[
+          ['Invoice No', invoice.invoice_number], ['Date', fmtDate(invoice.invoice_date)],
+          ['Patient', invoice.patient_name], ['Phone', (invoice as any).patient_phone],
+          ['Address', [(invoice as any).address_line1, (invoice as any).city].filter(Boolean).join(', ')],
+        ]}
+        footer={invoice.notes ? <div style={{ maxWidth: 360 }}><strong>Notes:</strong> {invoice.notes}</div> : undefined}>
+        <table className="print-table">
+          <thead><tr><th style={{ width: 28 }}>#</th><th>Description</th><th style={{ width: 50 }}>Qty</th><th className="num" style={{ width: 110 }}>Rate</th><th className="num" style={{ width: 120 }}>Amount</th></tr></thead>
+          <tbody>
+            {(invoice.items || []).map((it, idx) => (
+              <tr key={idx}><td>{idx + 1}</td><td>{it.description}</td><td>{it.quantity}</td><td className="num">{formatINR(it.unit_price_paise)}</td><td className="num">{formatINR(it.total_paise)}</td></tr>
+            ))}
+          </tbody>
+        </table>
+        <table className="print-table" style={{ width: '50%', marginLeft: 'auto' }}>
+          <tbody>
+            <tr><td>Subtotal</td><td className="num">{formatINR(invoice.subtotal_paise)}</td></tr>
+            {invoice.discount_paise > 0 && <tr><td>Discount</td><td className="num">-{formatINR(invoice.discount_paise)}</td></tr>}
+            {invoice.tax_paise > 0 && <tr><td>Tax</td><td className="num">{formatINR(invoice.tax_paise)}</td></tr>}
+            <tr><th>Total</th><th className="num">{formatINR(invoice.total_paise)}</th></tr>
+            <tr><td>Paid</td><td className="num">{formatINR(invoice.paid_paise || 0)}</td></tr>
+            <tr><th>Balance due</th><th className="num">{formatINR(Math.max(0, invoice.balance_paise || 0))}</th></tr>
+          </tbody>
+        </table>
+        {(invoice.payments || []).length > 0 && (
+          <>
+            <div className="print-section-title">Payments received</div>
+            <table className="print-table">
+              <thead><tr><th>Date</th><th>Mode</th><th>Reference</th><th className="num">Amount</th></tr></thead>
+              <tbody>
+                {(invoice.payments || []).map(p => (
+                  <tr key={p.id}><td>{fmtDate(p.transaction_date)}</td><td>{p.payment_method.replace('_', ' ')}</td><td>{p.reference_number}</td><td className="num">{formatINR(p.amount_paise)}</td></tr>
+                ))}
+              </tbody>
+            </table>
+          </>
+        )}
+      </PrintPreview>
 
       <Modal title="Record Payment" open={paymentOpen} onCancel={() => setPaymentOpen(false)} onOk={recordPayment} destroyOnClose>
         <Form form={payForm} layout="vertical">

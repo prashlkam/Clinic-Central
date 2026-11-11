@@ -2,6 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.reportService = void 0;
 const connection_1 = require("../database/connection");
+const helpers_1 = require("../database/helpers");
 function getStrftimeFormat(granularity) {
     switch (granularity) {
         case 'daily': return '%Y-%m-%d';
@@ -157,13 +158,13 @@ exports.reportService = {
     },
     getDashboardStats() {
         const db = (0, connection_1.getDatabase)();
-        const today = new Date().toISOString().split('T')[0];
+        const today = (0, helpers_1.localDate)();
         const monthStart = today.substring(0, 7) + '-01';
         const todayAppts = db.prepare(`
       SELECT COUNT(*) as count FROM appointments
-      WHERE date(appointment_date) = date('now')
+      WHERE appointment_date >= ? AND appointment_date < ?
         AND status NOT IN ('cancelled', 'no_show')
-    `).get();
+    `).get(...(0, helpers_1.localDayRange)());
         const monthIncome = db.prepare(`
       SELECT COALESCE(SUM(amount_paise), 0) as total
       FROM transactions WHERE type IN ('income','advance')

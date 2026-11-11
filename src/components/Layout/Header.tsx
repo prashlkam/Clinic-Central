@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Layout, Space, Avatar, Typography, Badge, notification, Dropdown, MenuProps } from 'antd';
 import {
   UserOutlined,
@@ -15,6 +15,7 @@ import { useThemeStore } from '../../stores/themeStore';
 import { useNotificationStore } from '../../stores/notificationStore';
 import { appointmentsApi } from '../../api/appointments.api';
 import { Appointment } from '../../types/appointment.types';
+import { doctorApi } from '../../api/doctor.api';
 
 const { Header: AntHeader } = Layout;
 const { Text } = Typography;
@@ -27,6 +28,11 @@ const Header: React.FC = () => {
   const { isBellEnabled, toggleBell } = useNotificationStore();
   const checkIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const navigate = useNavigate();
+  const [doctorName, setDoctorName] = useState('Doctor');
+
+  useEffect(() => {
+    doctorApi.getProfile().then((p: any) => { if (p?.name) setDoctorName(p.name); }).catch(() => undefined);
+  }, []);
 
   // User dropdown menu items
   const userMenuItems: MenuProps['items'] = [
@@ -43,8 +49,7 @@ const Header: React.FC = () => {
       icon: <FileTextOutlined />,
       label: 'Reports',
       onClick: () => {
-        // Navigate to reports page
-        window.location.href = '/reports';
+        navigate('/reports');
       },
     },
     {
@@ -56,14 +61,9 @@ const Header: React.FC = () => {
       label: 'Sign Out',
       danger: true,
       onClick: () => {
-        // Handle sign out logic
-        notification.success({
-          message: 'Signed Out',
-          description: 'You have been signed out successfully.',
-          placement: 'topRight',
-        });
-        // Redirect to login page or clear auth state
-        // window.location.href = '/login';
+        // Reloading drops the in-memory session, so the password screen is shown again.
+        window.location.hash = '#/';
+        window.location.reload();
       },
     },
   ];
@@ -225,7 +225,7 @@ const Header: React.FC = () => {
                 display: window.innerWidth < 768 ? 'none' : 'block',
               }}
             >
-              Doctor
+              {doctorName}
             </Text>
             <DownOutlined
               style={{

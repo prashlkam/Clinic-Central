@@ -7,6 +7,9 @@ export interface Appointment {
   status: string;
   notes: string | null;
   google_event_id: string | null;
+  token_number?: number | null;
+  checked_in_at?: string | null;
+  is_walk_in?: number;
   created_at: string;
   updated_at: string;
   patient_name?: string;

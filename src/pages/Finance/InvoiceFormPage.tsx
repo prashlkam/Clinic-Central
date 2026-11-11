@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { Card, Form, Select, DatePicker, InputNumber, Input, Button, Table, Space, message, Row, Col } from 'antd';
+import { Card, Form, Select, DatePicker, InputNumber, Input, Button, Table, Space, message, Row, Col, Alert } from 'antd';
 import { PlusOutlined, DeleteOutlined, ArrowLeftOutlined } from '@ant-design/icons';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { membershipsApi } from '../../api/clinic.api';
 import { patientsApi } from '../../api/patients.api';
 import { treatmentsApi } from '../../api/treatments.api';
 import { invoicesApi } from '../../api/finance.api';
@@ -17,11 +18,22 @@ const InvoiceFormPage: React.FC = () => {
   const [treatments, setTreatments] = useState<Treatment[]>([]);
   const [items, setItems] = useState<InvoiceItem[]>([]);
   const [saving, setSaving] = useState(false);
+  const [searchParams] = useSearchParams();
+  const [membership, setMembership] = useState<any | null>(null);
+  const patientId = Form.useWatch('patient_id', form);
+  Form.useWatch('discount', form); // re-render totals when these change
+  Form.useWatch('tax', form);
+
+  useEffect(() => {
+    if (!patientId) { setMembership(null); return; }
+    membershipsApi.activeForPatient(patientId).then(setMembership).catch(() => setMembership(null));
+  }, [patientId]);
 
   useEffect(() => {
     patientsApi.getAll().then(setPatients);
     treatmentsApi.getAllFlat().then(setTreatments);
-    form.setFieldsValue({ invoice_date: dayjs(), discount: 0, tax: 0 });
+    const preset = Number(searchParams.get('patient'));
+    form.setFieldsValue({ invoice_date: dayjs(), discount: 0, tax: 0, ...(preset ? { patient_id: preset } : {}) });
   }, []);
 
   const addItem = () => {
@@ -61,18 +73,28 @@ const InvoiceFormPage: React.FC = () => {
     const values = await form.validateFields();
     if (items.length === 0) { message.error('Add at least one item'); return; }
 
+    if (items.some(i => !i.description?.trim())) { message.error('Every line item needs a description'); return; }
+    if (Math.round((values.discount || 0) * 100) > subtotal) { message.error('Discount cannot be more than the subtotal'); return; }
+
     setSaving(true);
-    const result = await invoicesApi.create({
-      patient_id: values.patient_id,
-      invoice_date: values.invoice_date.format('YYYY-MM-DD'),
-      discount_paise: Math.round((values.discount || 0) * 100),
-      tax_paise: Math.round((values.tax || 0) * 100),
-      notes: values.notes,
-      items,
-    });
-    message.success(`Invoice ${result.invoice_number} created`);
+    let result: any;
+    try {
+      result = await invoicesApi.create({
+        patient_id: values.patient_id,
+        invoice_date: values.invoice_date.format('YYYY-MM-DD'),
+        discount_paise: Math.round((values.discount || 0) * 100),
+        tax_paise: Math.round((values.tax || 0) * 100),
+        notes: values.notes,
+        items,
+      });
+    } catch (err: any) {
+      setSaving(false);
+      message.error(err?.message || 'Could not create the invoice');
+      return;
+    }
     setSaving(false);
-    navigate('/invoices');
+    message.success(`Invoice ${result.invoice_number} created`);
+    navigate(`/invoices/${result.id}`);
   };
 
   const itemColumns = [
@@ -153,6 +175,17 @@ const InvoiceFormPage: React.FC = () => {
           </Row>
         </Form>
       </Card>
+
+      {membership && (
+        <Alert type="success" showIcon style={{ marginBottom: 16 }}
+          message={`Member: ${membership.name} — ${membership.discount_percent}% discount on this bill`}
+          action={
+            <Button size="small" type="primary" disabled={subtotal === 0}
+              onClick={() => form.setFieldValue('discount', Math.round(subtotal * membership.discount_percent / 100) / 100)}>
+              Apply {membership.discount_percent}% ({formatINR(Math.round(subtotal * membership.discount_percent / 100))})
+            </Button>
+          } />
+      )}
 
       <Card title="Line Items" extra={<Button icon={<PlusOutlined />} onClick={addItem}>Add Item</Button>}>
         <Table columns={itemColumns} dataSource={items} rowKey={(_, i) => String(i)} pagination={false} size="small" />

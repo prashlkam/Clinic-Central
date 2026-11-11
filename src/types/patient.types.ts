@@ -14,6 +14,13 @@ export interface Patient {
   pincode: string | null;
   medical_history: string | null;
   notes: string | null;
+  blood_group?: string | null;
+  allergies?: string | null;
+  medical_conditions?: string | null;
+  current_medications?: string | null;
+  referred_by?: string | null;
+  membership_plan_id?: number | null;
+  membership_expiry?: string | null;
   is_active: number;
   created_at: string;
   updated_at: string;
@@ -25,6 +32,8 @@ export interface PatientSummary extends Patient {
   total_paid_paise?: number;
   outstanding_paise?: number;
   advance_balance_paise?: number;
+  membership_name?: string | null;
+  membership_discount_percent?: number | null;
 }
 
 export interface PatientFilters {

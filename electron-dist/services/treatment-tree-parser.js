@@ -1,8 +1,8 @@
 "use strict";
+// Legacy indentation-based text format (kept so old .txt files can still be imported).
+// The default treatment list and the preferred import/export format is JSON: see treatment-json.ts
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.parseTreatmentFile = parseTreatmentFile;
-exports.importTreatmentTrees = importTreatmentTrees;
-const connection_1 = require("../database/connection");
 function parseTreatmentFile(content) {
     const trees = [];
     let currentTree = null;
@@ -30,40 +30,5 @@ function parseTreatmentFile(content) {
         currentTree.treatments.push({ name, cost, duration, depth });
     }
     return trees;
-}
-function importTreatmentTrees(content) {
-    const db = (0, connection_1.getDatabase)();
-    const parsed = parseTreatmentFile(content);
-    let treesCreated = 0;
-    let treatmentsCreated = 0;
-    const insertTree = db.prepare('INSERT OR IGNORE INTO treatment_trees (name) VALUES (?)');
-    const getTreeId = db.prepare('SELECT id FROM treatment_trees WHERE name = ?');
-    const insertTreatment = db.prepare(`
-    INSERT INTO treatments (tree_id, parent_id, name, estimated_cost_paise, duration_minutes, sort_order)
-    VALUES (?, ?, ?, ?, ?, ?)
-  `);
-    const transaction = db.transaction(() => {
-        for (const tree of parsed) {
-            insertTree.run(tree.name);
-            const treeRow = getTreeId.get(tree.name);
-            const treeId = treeRow.id;
-            treesCreated++;
-            // Stack: depth -> last inserted ID at that depth
-            const stack = new Map();
-            for (let i = 0; i < tree.treatments.length; i++) {
-                const t = tree.treatments[i];
-                let parentId = null;
-                if (t.depth > 0) {
-                    parentId = stack.get(t.depth - 1) || null;
-                }
-                const result = insertTreatment.run(treeId, parentId, t.name, t.cost * 100, // Convert INR to paise
-                t.duration, i);
-                stack.set(t.depth, Number(result.lastInsertRowid));
-                treatmentsCreated++;
-            }
-        }
-    });
-    transaction();
-    return { treesCreated, treatmentsCreated };
 }
 //# sourceMappingURL=treatment-tree-parser.js.map

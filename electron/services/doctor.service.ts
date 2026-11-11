@@ -1,8 +1,22 @@
 import crypto from 'crypto';
 import { getDatabase } from '../database/connection';
 
+// Stored as "scrypt$<salt>$<hash>". Databases created by older versions hold an unsalted
+// SHA-256 hex digest; those still verify and are upgraded on the next successful login.
 function hashPassword(password: string): string {
-  return crypto.createHash('sha256').update(password).digest('hex');
+  const salt = crypto.randomBytes(16).toString('hex');
+  const hash = crypto.scryptSync(password, salt, 64).toString('hex');
+  return `scrypt$${salt}$${hash}`;
+}
+
+function verifyPassword(password: string, stored: string): boolean {
+  if (stored.startsWith('scrypt$')) {
+    const [, salt, hash] = stored.split('$');
+    const candidate = crypto.scryptSync(password, salt, 64);
+    const expected = Buffer.from(hash, 'hex');
+    return expected.length === candidate.length && crypto.timingSafeEqual(candidate, expected);
+  }
+  return crypto.createHash('sha256').update(password).digest('hex') === stored;
 }
 
 function stripHash(row: any) {
@@ -45,9 +59,11 @@ export const doctorService = {
     const row = db.prepare('SELECT * FROM doctor LIMIT 1').get() as any;
     if (!row) throw new Error('No doctor registered');
 
-    const hash = hashPassword(password);
-    if (hash !== row.password_hash) {
+    if (!verifyPassword(password, row.password_hash)) {
       throw new Error('Invalid password');
+    }
+    if (!row.password_hash.startsWith('scrypt$')) {
+      db.prepare('UPDATE doctor SET password_hash = ? WHERE id = ?').run(hashPassword(password), row.id);
     }
     return stripHash(row);
   },
@@ -86,7 +102,7 @@ export const doctorService = {
     const row = db.prepare('SELECT password_hash FROM doctor LIMIT 1').get() as any;
     if (!row) throw new Error('No doctor registered');
 
-    if (hashPassword(oldPassword) !== row.password_hash) {
+    if (!verifyPassword(oldPassword, row.password_hash)) {
       throw new Error('Current password is incorrect');
     }
 

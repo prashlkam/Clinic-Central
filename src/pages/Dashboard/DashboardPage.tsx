@@ -1,12 +1,14 @@
 import React, { useEffect, useState } from 'react';
-import { Card, Col, Row, Table, Button, Space, Tag } from 'antd';
+import { Card, Col, Row, Table, Button, Space, Tag, List, Empty } from 'antd';
 import {
   UserOutlined, CalendarOutlined, DollarOutlined,
-  WarningOutlined, PlusOutlined, WalletOutlined,
+  WarningOutlined, PlusOutlined, WalletOutlined, TeamOutlined, GiftOutlined,
 } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { reportsApi } from '../../api/finance.api';
 import { appointmentsApi } from '../../api/appointments.api';
+import { analyticsApi } from '../../api/clinic.api';
+import { fmtDate } from '../../components/Print/PrintPreview';
 import { DashboardStats } from '../../types/finance.types';
 import { Appointment } from '../../types/appointment.types';
 import { formatINR, formatINRShort } from '../../styles/theme';
@@ -21,6 +23,7 @@ const DashboardPage: React.FC = () => {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [upcoming, setUpcoming] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
+  const [extras, setExtras] = useState<any>(null);
 
   useEffect(() => {
     Promise.all([
@@ -29,8 +32,8 @@ const DashboardPage: React.FC = () => {
     ]).then(([s, u]) => {
       setStats(s);
       setUpcoming(u);
-      setLoading(false);
-    });
+    }).catch(() => undefined).finally(() => setLoading(false));
+    analyticsApi.dashboardExtras().then(setExtras).catch(() => setExtras(null));
   }, []);
 
   const columns = [
@@ -96,6 +99,13 @@ const DashboardPage: React.FC = () => {
           </Card>
         </Col>
         <Col xs={12} sm={8}>
+          <Card className="stat-card" loading={loading} hoverable onClick={() => navigate('/queue')}>
+            <div style={{ color: '#0d9488' }}><TeamOutlined style={{ fontSize: 24 }} /></div>
+            <div className="stat-value">{extras?.queue?.waiting ?? 0}</div>
+            <div className="stat-label">Waiting now · {extras?.queue?.in_progress ?? 0} in chair · {extras?.queue?.completed ?? 0} done</div>
+          </Card>
+        </Col>
+        <Col xs={12} sm={8}>
           <Card className="stat-card" loading={loading}>
             <div style={{ color: '#7c3aed' }}><WalletOutlined style={{ fontSize: 24 }} /></div>
             <div className="stat-value">{formatINRShort(stats?.totalAdvances ?? 0)}</div>
@@ -132,6 +142,60 @@ const DashboardPage: React.FC = () => {
                 {formatINR((stats?.monthIncome ?? 0) - (stats?.monthExpenses ?? 0))}
               </div>
             </div>
+          </Card>
+          {(extras?.birthdays?.length || 0) > 0 && (
+            <Card title={<span><GiftOutlined style={{ color: '#db2777' }} /> Birthdays today</span>} size="small" style={{ marginTop: 16 }}>
+              {extras.birthdays.map((b: any) => (
+                <div key={b.id}><a onClick={() => navigate(`/patients/${b.id}`)}>{b.patient_name}</a> · {b.patient_phone}</div>
+              ))}
+            </Card>
+          )}
+        </Col>
+      </Row>
+
+      <Row gutter={[16, 16]} style={{ marginTop: 16 }}>
+        <Col xs={24} lg={8}>
+          <Card title="Follow-ups due (no appointment booked)" size="small" styles={{ body: { maxHeight: 260, overflowY: 'auto' } }}>
+            {extras?.followUps?.length ? (
+              <List size="small" dataSource={extras.followUps} renderItem={(f: any) => (
+                <List.Item>
+                  <div>
+                    <a onClick={() => navigate(`/patients/${f.patient_id}`)}>{f.patient_name}</a> · {f.patient_phone}
+                    <div className="stat-label" style={{ fontSize: 12 }}>{f.reason}</div>
+                  </div>
+                  <Tag color={f.follow_up_date < new Date().toLocaleDateString('en-CA') ? 'red' : 'blue'}>{fmtDate(f.follow_up_date)}</Tag>
+                </List.Item>
+              )} />
+            ) : <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="No recalls pending" />}
+          </Card>
+        </Col>
+        <Col xs={24} lg={8}>
+          <Card title="Lab work due" size="small" extra={<Button type="link" size="small" onClick={() => navigate('/lab-orders')}>All orders</Button>}
+            styles={{ body: { maxHeight: 260, overflowY: 'auto' } }}>
+            {extras?.labDue?.length ? (
+              <List size="small" dataSource={extras.labDue} renderItem={(o: any) => (
+                <List.Item>
+                  <div>
+                    <a onClick={() => navigate(`/patients/${o.patient_id}`)}>{o.patient_name}</a>
+                    <div className="stat-label" style={{ fontSize: 12 }}>{[o.work_type, o.teeth, o.lab_name].filter(Boolean).join(' · ')}</div>
+                  </div>
+                  <Tag color={o.due_date < new Date().toLocaleDateString('en-CA') ? 'red' : 'orange'}>{fmtDate(o.due_date)}</Tag>
+                </List.Item>
+              )} />
+            ) : <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="Nothing due from labs" />}
+          </Card>
+        </Col>
+        <Col xs={24} lg={8}>
+          <Card title="Low stock" size="small" extra={<Button type="link" size="small" onClick={() => navigate('/inventory')}>Inventory</Button>}
+            styles={{ body: { maxHeight: 260, overflowY: 'auto' } }}>
+            {extras?.lowStock?.length ? (
+              <List size="small" dataSource={extras.lowStock} renderItem={(i: any) => (
+                <List.Item>
+                  <span>{i.name}</span>
+                  <Tag color={i.quantity === 0 ? 'red' : 'orange'}>{i.quantity} {i.unit} left</Tag>
+                </List.Item>
+              )} />
+            ) : <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="Stock levels are fine" />}
           </Card>
         </Col>
       </Row>

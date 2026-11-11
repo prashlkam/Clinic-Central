@@ -13,6 +13,10 @@ import {
   SettingOutlined,
   MoonOutlined,
   SunOutlined,
+  TeamOutlined,
+  ExperimentOutlined,
+  InboxOutlined,
+  BookOutlined,
 } from '@ant-design/icons';
 import { useThemeStore } from '../../stores/themeStore';
 
@@ -30,9 +34,12 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, onCollapse }) => {
 
   const menuItems = [
     { key: '/', icon: <DashboardOutlined />, label: 'Dashboard' },
+    { key: '/queue', icon: <TeamOutlined />, label: "Today's Queue" },
+    { key: '/appointments', icon: <CalendarOutlined />, label: 'Appointments' },
     { key: '/patients', icon: <UserOutlined />, label: 'Patients' },
     { key: '/treatments', icon: <MedicineBoxOutlined />, label: 'Treatments' },
-    { key: '/appointments', icon: <CalendarOutlined />, label: 'Appointments' },
+    { key: '/lab-orders', icon: <ExperimentOutlined />, label: 'Lab Orders' },
+    { key: '/inventory', icon: <InboxOutlined />, label: 'Inventory' },
     {
       key: 'finance',
       icon: <DollarOutlined />,
@@ -44,6 +51,7 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, onCollapse }) => {
         { key: '/reports', icon: <BarChartOutlined />, label: 'Reports' },
       ],
     },
+    { key: '/libraries', icon: <BookOutlined />, label: 'Libraries' },
     { key: '/settings', icon: <SettingOutlined />, label: 'Settings' },
   ];
 
@@ -54,7 +62,7 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, onCollapse }) => {
       if (item.children) {
         return item.children.some(child => path.startsWith(child.key));
       }
-      return path.startsWith(item.key);
+      return item.key !== '/' && path.startsWith(item.key);
     });
     if (match?.children) {
       const child = match.children.find(c => path.startsWith(c.key));
@@ -80,7 +88,7 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, onCollapse }) => {
       </div>
       <Menu
         theme={isDarkMode ? 'dark' : 'light'}
-        style={{ background: 'transparent' }}
+        style={{ background: 'transparent', height: 'calc(100vh - 170px)', overflowY: 'auto', overflowX: 'hidden' }}
         mode="inline"
         selectedKeys={[getSelectedKey()]}
         defaultOpenKeys={['finance']}

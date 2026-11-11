@@ -1,0 +1,129 @@
+{
+  "version": 1,
+  "currency": "INR",
+  "description": "Default dental treatment list for Clinic Central. cost is in rupees, duration in minutes. Treatments may be nested with \"children\".",
+  "categories": [
+    {
+      "name": "General Dentistry",
+      "description": "Routine consultations, restorations and extractions",
+      "treatments": [
+        { "name": "Consultation", "cost": 500, "duration": 15 },
+        { "name": "Scaling and Polishing", "cost": 1500, "duration": 30 },
+        { "name": "Filling", "cost": 2000, "duration": 30, "children": [
+          { "name": "Composite Filling", "cost": 2000, "duration": 30 },
+          { "name": "GIC Filling", "cost": 1500, "duration": 20 },
+          { "name": "Silver Amalgam", "cost": 1000, "duration": 20 }
+        ] },
+        { "name": "Extraction", "cost": 1500, "duration": 30, "children": [
+          { "name": "Simple Extraction", "cost": 1000, "duration": 20 },
+          { "name": "Surgical Extraction", "cost": 3000, "duration": 45 },
+          { "name": "Wisdom Tooth", "cost": 5000, "duration": 60 }
+        ] },
+        { "name": "Teeth Whitening", "cost": 8000, "duration": 60, "children": [
+          { "name": "In-Office Whitening", "cost": 8000, "duration": 60 },
+          { "name": "Take-Home Kit", "cost": 5000, "duration": 15 }
+        ] }
+      ]
+    },
+    {
+      "name": "Diagnostics",
+      "description": "Radiographs and diagnostic records",
+      "treatments": [
+        { "name": "Intraoral X-Ray (IOPA)", "cost": 300, "duration": 10 },
+        { "name": "Bitewing X-Ray", "cost": 300, "duration": 10 },
+        { "name": "OPG (Panoramic X-Ray)", "cost": 800, "duration": 15 },
+        { "name": "Study Models", "cost": 1000, "duration": 20 }
+      ]
+    },
+    {
+      "name": "Endodontics",
+      "description": "Root canal and pulp therapy",
+      "treatments": [
+        { "name": "Root Canal Treatment", "cost": 8000, "duration": 60, "children": [
+          { "name": "Single Canal", "cost": 5000, "duration": 45 },
+          { "name": "Multi Canal", "cost": 8000, "duration": 60 },
+          { "name": "Re-treatment", "cost": 10000, "duration": 90 }
+        ] },
+        { "name": "Pulpotomy", "cost": 3000, "duration": 30 },
+        { "name": "Pulpectomy", "cost": 4000, "duration": 45, "children": [
+          { "name": "Primary Tooth", "cost": 3000, "duration": 30 },
+          { "name": "Permanent Tooth", "cost": 5000, "duration": 45 }
+        ] },
+        { "name": "Post and Core", "cost": 3500, "duration": 45 },
+        { "name": "Apicoectomy", "cost": 12000, "duration": 60 }
+      ]
+    },
+    {
+      "name": "Periodontics",
+      "description": "Gum treatments",
+      "treatments": [
+        { "name": "Deep Scaling and Root Planing", "cost": 4000, "duration": 45, "children": [
+          { "name": "Per Quadrant", "cost": 1500, "duration": 30 },
+          { "name": "Full Mouth", "cost": 5000, "duration": 90 }
+        ] },
+        { "name": "Flap Surgery (per quadrant)", "cost": 8000, "duration": 60 },
+        { "name": "Gingivectomy", "cost": 3000, "duration": 30 },
+        { "name": "Splinting", "cost": 3000, "duration": 30 }
+      ]
+    },
+    {
+      "name": "Orthodontics",
+      "description": "Braces, aligners and retainers",
+      "treatments": [
+        { "name": "Metal Braces", "cost": 35000, "duration": 45, "children": [
+          { "name": "Upper Arch Only", "cost": 20000, "duration": 45 },
+          { "name": "Lower Arch Only", "cost": 20000, "duration": 45 },
+          { "name": "Full Mouth", "cost": 35000, "duration": 60 }
+        ] },
+        { "name": "Ceramic Braces", "cost": 50000, "duration": 45, "children": [
+          { "name": "Upper Arch", "cost": 30000, "duration": 45 },
+          { "name": "Full Mouth", "cost": 50000, "duration": 60 }
+        ] },
+        { "name": "Aligners", "cost": 150000, "duration": 30, "children": [
+          { "name": "Single Arch", "cost": 80000, "duration": 30 },
+          { "name": "Both Arches", "cost": 150000, "duration": 30 }
+        ] },
+        { "name": "Retainers", "cost": 5000, "duration": 20, "children": [
+          { "name": "Fixed Retainer", "cost": 3000, "duration": 20 },
+          { "name": "Removable Retainer", "cost": 5000, "duration": 15 }
+        ] },
+        { "name": "Braces Adjustment Visit", "cost": 500, "duration": 20 }
+      ]
+    },
+    {
+      "name": "Prosthodontics",
+      "description": "Crowns, bridges, dentures and implants",
+      "treatments": [
+        { "name": "Crown", "cost": 8000, "duration": 45, "children": [
+          { "name": "PFM Crown", "cost": 6000, "duration": 45 },
+          { "name": "Zirconia Crown", "cost": 15000, "duration": 45 },
+          { "name": "E-max Crown", "cost": 12000, "duration": 45 }
+        ] },
+        { "name": "Bridge", "cost": 20000, "duration": 60, "children": [
+          { "name": "3-Unit Bridge", "cost": 18000, "duration": 60 },
+          { "name": "Long Span Bridge", "cost": 30000, "duration": 90 }
+        ] },
+        { "name": "Veneer", "cost": 12000, "duration": 45 },
+        { "name": "Dentures", "cost": 15000, "duration": 60, "children": [
+          { "name": "Complete Denture", "cost": 15000, "duration": 60 },
+          { "name": "Partial Denture", "cost": 10000, "duration": 45 },
+          { "name": "Flexible Denture", "cost": 20000, "duration": 45 }
+        ] },
+        { "name": "Implant", "cost": 35000, "duration": 90, "children": [
+          { "name": "Single Implant", "cost": 35000, "duration": 90 },
+          { "name": "Implant with Crown", "cost": 45000, "duration": 120 }
+        ] }
+      ]
+    },
+    {
+      "name": "Pediatric Dentistry",
+      "description": "Treatments for children",
+      "treatments": [
+        { "name": "Fluoride Application", "cost": 800, "duration": 15 },
+        { "name": "Pit and Fissure Sealant (per tooth)", "cost": 800, "duration": 15 },
+        { "name": "Stainless Steel Crown", "cost": 2500, "duration": 30 },
+        { "name": "Space Maintainer", "cost": 4000, "duration": 30 }
+      ]
+    }
+  ]
+}
