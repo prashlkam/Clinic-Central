@@ -32,7 +32,7 @@ Status legend: ✅ built and verified · 🔶 adapted for a local single-doctor 
 | Prescriptions: drug library, dosage templates, reusable patterns, letterhead | Drug library (JSON-seeded), prescription templates, repeat prescription, letterhead print | ✅ |
 | Digital consent forms | Consent templates (JSON-seeded) with placeholders; on-screen signature capture or print for pen signature; signed consents are locked | ✅ |
 | Dental lab module: orders, shade, trial dates, tracking, reports | Lab Orders (per patient and clinic-wide): lab, work type, material, teeth, shade, trial/due/received dates, status, overdue flags, lab charge → expense | ✅ |
-| Appointment scheduling, easy rescheduling | Appointment list with status workflow (already present), `.ics` export | ✅ |
+| Appointment scheduling, easy rescheduling | Appointment list plus week / month calendar view (click a free slot to book, click an appointment to edit), status workflow, `.ics` export | ✅ |
 | Token / queue system for walk-ins | Today's Queue: check-in issues the next token, walk-in registration, call-in / complete | ✅ |
 | Billing: branded invoices, partial payments, dues, receipts | Invoices with letterhead print (invoice / receipt), partial payments, advances, dues (already present; print rebuilt) | ✅ |
 | Membership plans with bill-level discounts | Membership plans; assign to a patient with expiry; one-click discount on the invoice | ✅ |
@@ -237,7 +237,7 @@ scripts/
 
 Phases 1–8 of the original plan (foundation, patients, treatments, appointments, finance, reports,
 dashboard, backup) were already implemented, except Google Calendar sync (now dropped) and the calendar
-view / system tray / keyboard shortcuts (still open, see Phase 16).
+view (now built, Phase 16) and system tray / keyboard shortcuts (still open, see Phase 17).
 
 | Phase | Scope | Status |
 |---|---|---|
@@ -248,7 +248,8 @@ view / system tray / keyboard shortcuts (still open, see Phase 16).
 | 13. Lab, consents, inventory, memberships | Lab orders and lab expense, consent forms with signature, stock management, membership discounts | ✅ |
 | 14. Reception & reports | Token queue and walk-ins, dashboard recall / lab / stock / birthday lists, collections, procedure-wise and patient reports, letterhead invoice print | ✅ |
 | 15. Safety | Transactional migrations, pre-upgrade snapshot, automatic daily backup, safe restore, attachments in manual backup, scrypt password hashing | ✅ |
-| 16. Open items | Calendar (month/week) view of appointments; Excel export for the new reports; appointment overlap warning; keyboard shortcuts; build and test the Windows installer; automated UI tests | ☐ |
+| 16. Calendar | Week and month calendar view of appointments | ✅ |
+| 17. Open items | Excel export for the new reports; appointment overlap warning; keyboard shortcuts; build and test the Windows installer; automated UI tests | ☐ |
 
 ### Verification done
 

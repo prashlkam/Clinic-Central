@@ -1,13 +1,14 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { Table, Input, Button, Space, Tag, Select, DatePicker, message, Popconfirm, Tooltip } from 'antd';
-import { PlusOutlined, SearchOutlined, ExportOutlined, DeleteOutlined, EditOutlined, CalendarOutlined } from '@ant-design/icons';
+import { Table, Input, Button, Space, Tag, Select, DatePicker, message, Popconfirm, Tooltip, Segmented, Card } from 'antd';
+import { PlusOutlined, SearchOutlined, ExportOutlined, DeleteOutlined, EditOutlined, CalendarOutlined, UnorderedListOutlined } from '@ant-design/icons';
 import { useSearchParams } from 'react-router-dom';
 import { appointmentsApi } from '../../api/appointments.api';
 import { excelApi } from '../../api/finance.api';
 import { Appointment, AppointmentFilters } from '../../types/appointment.types';
 import AppointmentFormModal from './AppointmentFormModal';
 import CalendarSyncModal from '../../components/CalendarSync/CalendarSyncModal';
-import dayjs from 'dayjs';
+import dayjs, { Dayjs } from 'dayjs';
+import AppointmentCalendar from './AppointmentCalendar';
 
 const { RangePicker } = DatePicker;
 
@@ -37,6 +38,11 @@ const AppointmentListPage: React.FC = () => {
   const [saving, setSaving] = useState(false);
   const [calendarSyncOpen, setCalendarSyncOpen] = useState(false);
   const [syncAppointment, setSyncAppointment] = useState<any>(null);
+  const [view, setView] = useState<'list' | 'calendar'>(() => (localStorage.getItem('appointments-view') === 'calendar' ? 'calendar' : 'list'));
+  const [calendarKey, setCalendarKey] = useState(0);
+  const [initialDate, setInitialDate] = useState<Dayjs | null>(null);
+
+  useEffect(() => { localStorage.setItem('appointments-view', view); }, [view]);
 
   const fetchAppointments = useCallback(async () => {
     setLoading(true);
@@ -53,17 +59,24 @@ const AppointmentListPage: React.FC = () => {
 
   const handleSave = async (data: any, meta?: { patient_name?: string; treatment_name?: string }) => {
     setSaving(true);
-    if (editAppointment) {
-      await appointmentsApi.update(editAppointment.id, data);
-      message.success('Appointment updated');
-    } else {
-      await appointmentsApi.create(data);
-      message.success('Appointment created');
+    try {
+      if (editAppointment) {
+        await appointmentsApi.update(editAppointment.id, data);
+        message.success('Appointment updated');
+      } else {
+        await appointmentsApi.create(data);
+        message.success('Appointment created');
+      }
+    } catch (err: any) {
+      setSaving(false);
+      message.error(err?.message || 'Could not save the appointment');
+      return;
     }
     setSaving(false);
     setModalOpen(false);
     setEditAppointment(null);
     fetchAppointments();
+    setCalendarKey(k => k + 1);
     setSyncAppointment({
       patient_name: meta?.patient_name || editAppointment?.patient_name,
       treatment_name: meta?.treatment_name || editAppointment?.treatment_name,
@@ -145,16 +158,32 @@ const AppointmentListPage: React.FC = () => {
       <div className="page-header">
         <h2>Appointments</h2>
         <Space>
+          <Segmented value={view} onChange={(v) => setView(v as 'list' | 'calendar')}
+            options={[
+              { value: 'list', label: 'List', icon: <UnorderedListOutlined /> },
+              { value: 'calendar', label: 'Calendar', icon: <CalendarOutlined /> },
+            ]} />
           <Button icon={<ExportOutlined />} onClick={async () => {
             const r = await excelApi.exportAppointments(filters);
             if (r) message.success(`Exported ${r.count} appointments`);
           }}>Export</Button>
-          <Button type="primary" icon={<PlusOutlined />} onClick={() => { setEditAppointment(null); setModalOpen(true); }}>
+          <Button type="primary" icon={<PlusOutlined />} onClick={() => { setEditAppointment(null); setInitialDate(null); setModalOpen(true); }}>
             New Appointment
           </Button>
         </Space>
       </div>
 
+      {view === 'calendar' && (
+        <Card>
+          <AppointmentCalendar
+            refreshKey={calendarKey}
+            onEdit={(appt) => { setEditAppointment(appt); setInitialDate(null); setModalOpen(true); }}
+            onCreate={(when) => { setEditAppointment(null); setInitialDate(when); setModalOpen(true); }}
+          />
+        </Card>
+      )}
+
+      {view === 'list' && (<>
       <Space style={{ marginBottom: 16 }} wrap>
         <Input
           prefix={<SearchOutlined />}
@@ -194,8 +223,10 @@ const AppointmentListPage: React.FC = () => {
         }}
         size="middle"
       />
+      </>)}
 
       <AppointmentFormModal
+        initialDate={initialDate}
         open={modalOpen}
         appointment={editAppointment}
         onClose={() => { setModalOpen(false); setEditAppointment(null); }}

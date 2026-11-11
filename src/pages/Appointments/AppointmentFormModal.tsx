@@ -3,7 +3,7 @@ import { Modal, Form, Select, DatePicker, InputNumber, Input } from 'antd';
 import { patientsApi } from '../../api/patients.api';
 import TreatmentTreeSelect from '../../components/TreatmentTree/TreatmentTreeSelect';
 import { Appointment } from '../../types/appointment.types';
-import dayjs from 'dayjs';
+import dayjs, { Dayjs } from 'dayjs';
 
 interface Props {
   open: boolean;
@@ -11,9 +11,11 @@ interface Props {
   onClose: () => void;
   onSave: (data: any, meta?: { patient_name?: string; treatment_name?: string }) => void;
   loading?: boolean;
+  /** prefilled date and time for a new appointment (e.g. the calendar slot that was clicked) */
+  initialDate?: Dayjs | null;
 }
 
-const AppointmentFormModal: React.FC<Props> = ({ open, appointment, onClose, onSave, loading }) => {
+const AppointmentFormModal: React.FC<Props> = ({ open, appointment, onClose, onSave, loading, initialDate }) => {
   const [form] = Form.useForm();
   const [patients, setPatients] = useState<any[]>([]);
 
@@ -27,10 +29,10 @@ const AppointmentFormModal: React.FC<Props> = ({ open, appointment, onClose, onS
         });
       } else {
         form.resetFields();
-        form.setFieldsValue({ duration_minutes: 30 });
+        form.setFieldsValue({ duration_minutes: 30, ...(initialDate ? { appointment_date: initialDate } : {}) });
       }
     }
-  }, [open, appointment]);
+  }, [open, appointment, initialDate]);
 
   const handleOk = () => {
     form.validateFields().then(values => {

@@ -54,7 +54,7 @@ Then double-click **Clinic Central** on the desktop. See [Getting Started](#gett
 - Two-step selection: pick a tree, then pick a treatment within it
 
 ### Appointment Scheduling
-- List and calendar views for appointments
+- List view and a week / month calendar view; click a free slot to book, click an appointment to edit
 - Status workflow: Scheduled → Confirmed → In Progress → Completed / Cancelled / No-Show
 - Auto-fill duration from selected treatment
 - Today's appointments and upcoming appointments dashboard
