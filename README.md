@@ -1,6 +1,6 @@
 # Clinic Central
 
-A desktop clinic management application for a small dental clinic with a single main doctor, in India. Patients, clinical notes, dental chart, treatment plans, prescriptions, lab orders, consents, appointments and queue, invoices, expenses, inventory and reports — all in one app that runs **completely on your own computer**. No internet, no server, no account: double-click the desktop shortcut and work.
+A desktop clinic management application for a small dental clinic with a single main doctor, in India. Patients, clinical notes, dental chart, treatment plans, prescriptions, lab orders, consents, appointments and queue, invoices, expenses, inventory and reports — all in one app that runs **completely on your own computer**. No internet, no server, no account: double-click the desktop shortcut and work. (The optional Google Calendar invite and WhatsApp message buttons open in your browser and do need internet.)
 
 ![Electron](https://img.shields.io/badge/Electron-41-47848F?logo=electron&logoColor=white)
 ![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=white)
@@ -59,6 +59,8 @@ Then double-click **Clinic Central** on the desktop. See [Getting Started](#gett
 - Auto-fill duration from selected treatment
 - Today's appointments and upcoming appointments dashboard
 - Export an appointment as an `.ics` calendar file
+- After saving an appointment, send a **Google Calendar invite** (the patient's e-mail is added as a guest; you press Save and Send in Google Calendar)
+- Send a **WhatsApp booking confirmation or reminder**: the message is prepared for the patient's number and opened in WhatsApp, where you press Send. The appointment list has a WhatsApp button on every row for reminders. Nothing is sent automatically
 
 ### Invoicing
 - Auto-numbered invoices by year (e.g., `INV-2025-0001`)
@@ -87,7 +89,7 @@ Then double-click **Clinic Central** on the desktop. See [Getting Started](#gett
 - **Excel Export:** Patients, appointments, invoices, transactions, and reports to `.xlsx` with INR formatting
 - **Excel Import:** Patients and transactions with column mapping, validation preview, and batch insert
 - **Backup/Restore:** Automatic daily backup at startup (last 14 kept), manual backup of database + patient files to any folder, validated restore that first keeps a safety copy
-- **Settings:** Clinic info, GSTIN, invoice prefix/counter, backup path
+- **Settings:** Clinic info, GSTIN, invoice prefix/counter, backup path, WhatsApp message wording and default country code
 
 ---
 

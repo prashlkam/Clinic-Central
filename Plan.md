@@ -32,7 +32,7 @@ Status legend: ✅ built and verified · 🔶 adapted for a local single-doctor 
 | Prescriptions: drug library, dosage templates, reusable patterns, letterhead | Drug library (JSON-seeded), prescription templates, repeat prescription, letterhead print | ✅ |
 | Digital consent forms | Consent templates (JSON-seeded) with placeholders; on-screen signature capture or print for pen signature; signed consents are locked | ✅ |
 | Dental lab module: orders, shade, trial dates, tracking, reports | Lab Orders (per patient and clinic-wide): lab, work type, material, teeth, shade, trial/due/received dates, status, overdue flags, lab charge → expense | ✅ |
-| Appointment scheduling, easy rescheduling | Appointment list plus week / month calendar view (click a free slot to book, click an appointment to edit), status workflow, `.ics` export | ✅ |
+| Appointment scheduling, easy rescheduling | Appointment list plus week / month calendar view (click a free slot to book, click an appointment to edit), status workflow, `.ics` export, Google Calendar invite and WhatsApp confirmation / reminder from the dialog shown after saving (see the WhatsApp and Google Calendar rows below) | ✅ |
 | Token / queue system for walk-ins | Today's Queue: check-in issues the next token, walk-in registration, call-in / complete | ✅ |
 | Billing: branded invoices, partial payments, dues, receipts | Invoices with letterhead print (invoice / receipt), partial payments, advances, dues (already present; print rebuilt) | ✅ |
 | Membership plans with bill-level discounts | Membership plans; assign to a patient with expiry; one-click discount on the invoice | ✅ |
@@ -40,11 +40,11 @@ Status legend: ✅ built and verified · 🔶 adapted for a local single-doctor 
 | Inventory: stock, inward/outward, low-stock alerts | Inventory with stock-in / stock-out / count adjustment, movement history, reorder level, expiry, dashboard low-stock list | 🔶 no purchase orders or department requests (single small clinic) |
 | Reports: billing summaries, procedure-wise, new vs returning, outstanding, collections, Excel export | P&L, balance sheet, receivables, expenses (already present) + collections by payment mode / by day, procedure-wise billing, new vs returning patients, appointment outcomes | ✅ |
 | Recall / follow-up reminders, birthday greetings | Dashboard lists: follow-ups due with no appointment booked, birthdays today, lab work due | 🔶 shown to the clinic; nothing is sent automatically |
-| WhatsApp / SMS / e-mail sending | — | ⛔ needs an online service; print or "Save as PDF" and share manually |
+| WhatsApp / SMS / e-mail sending | WhatsApp appointment messages only: a booking confirmation or reminder is written from an editable template (Settings) and opened in WhatsApp for the patient's number through a click-to-chat link; the user presses Send | 🔶 click-to-send, one appointment at a time; nothing is sent automatically or on a schedule (that needs the WhatsApp Business API). SMS and e-mail: print or "Save as PDF" and share manually |
 | Online booking widget, Google/Facebook review requests | — | ⛔ online-only |
 | Multi-user roles, multi-doctor, multi-branch | Single password-protected doctor login | ⛔ out of scope for a single-doctor clinic |
 | Cloud sync, mobile apps, cloud backup | Local SQLite; automatic daily local backup; manual backup to any folder / USB drive | 🔶 |
-| Google Calendar sync (from the original plan) | Removed from the plan. Appointments can still be exported as `.ics` or opened in a web calendar by the user | ⛔ |
+| Google Calendar sync (from the original plan) | Two-way sync removed from the plan. An appointment can be opened in Google Calendar with the patient's e-mail as a guest, so Google sends the invitation when the user saves the event there; `.ics` export and Outlook web link also available | 🔶 one-way and manual, no Google sign-in in the app |
 
 ---
 
@@ -67,8 +67,9 @@ services use plain prepared statements, printing uses the browser engine, and Go
 ## 3. Local-Only Operation
 
 - **No network use.** The production UI is built with a Content-Security-Policy that only allows the app's
-  own files (`default-src 'self'`). External links (e.g. a web calendar) open in the system browser, never
-  inside the app window.
+  own files (`default-src 'self'`). External links (a web calendar, a WhatsApp click-to-chat link) open in
+  the system browser, never inside the app window. Those two links are the only way appointment details
+  leave the computer, and only when the user clicks them.
 - **Data location** (same whether started from the shortcut, `npm run launch`, or an installed package):
 
   | OS | Folder |
@@ -249,6 +250,7 @@ view (now built, Phase 16) and system tray / keyboard shortcuts (still open, see
 | 14. Reception & reports | Token queue and walk-ins, dashboard recall / lab / stock / birthday lists, collections, procedure-wise and patient reports, letterhead invoice print | ✅ |
 | 15. Safety | Transactional migrations, pre-upgrade snapshot, automatic daily backup, safe restore, attachments in manual backup, scrypt password hashing | ✅ |
 | 16. Calendar | Week and month calendar view of appointments | ✅ |
+| 16a. Invites & WhatsApp | Google Calendar invite with the patient as guest; click-to-send WhatsApp booking confirmation and reminder; message templates and default country code in Settings | ✅ builds cleanly; not yet clicked through in the running app |
 | 17. Open items | Excel export for the new reports; appointment overlap warning; keyboard shortcuts; build and test the Windows installer; automated UI tests | ☐ |
 
 ### Verification done
