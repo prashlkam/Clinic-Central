@@ -1,10 +1,11 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { Table, Input, Button, Space, Tag, Select, DatePicker, message, Popconfirm, Tooltip, Segmented, Card } from 'antd';
-import { PlusOutlined, SearchOutlined, ExportOutlined, DeleteOutlined, EditOutlined, CalendarOutlined, UnorderedListOutlined } from '@ant-design/icons';
+import { PlusOutlined, SearchOutlined, ExportOutlined, DeleteOutlined, EditOutlined, CalendarOutlined, UnorderedListOutlined, WhatsAppOutlined } from '@ant-design/icons';
 import { useSearchParams } from 'react-router-dom';
 import { appointmentsApi } from '../../api/appointments.api';
 import { excelApi } from '../../api/finance.api';
 import { Appointment, AppointmentFilters } from '../../types/appointment.types';
+import { WhatsAppMessageType } from '../../utils/appointmentShare';
 import AppointmentFormModal from './AppointmentFormModal';
 import CalendarSyncModal from '../../components/CalendarSync/CalendarSyncModal';
 import dayjs, { Dayjs } from 'dayjs';
@@ -38,6 +39,7 @@ const AppointmentListPage: React.FC = () => {
   const [saving, setSaving] = useState(false);
   const [calendarSyncOpen, setCalendarSyncOpen] = useState(false);
   const [syncAppointment, setSyncAppointment] = useState<any>(null);
+  const [syncMessageType, setSyncMessageType] = useState<WhatsAppMessageType>('confirmation');
   const [view, setView] = useState<'list' | 'calendar'>(() => (localStorage.getItem('appointments-view') === 'calendar' ? 'calendar' : 'list'));
   const [calendarKey, setCalendarKey] = useState(0);
   const [initialDate, setInitialDate] = useState<Dayjs | null>(null);
@@ -59,12 +61,15 @@ const AppointmentListPage: React.FC = () => {
 
   const handleSave = async (data: any, meta?: { patient_name?: string; treatment_name?: string }) => {
     setSaving(true);
+    let savedId: number | undefined;
     try {
       if (editAppointment) {
         await appointmentsApi.update(editAppointment.id, data);
+        savedId = editAppointment.id;
         message.success('Appointment updated');
       } else {
-        await appointmentsApi.create(data);
+        const created = await appointmentsApi.create(data);
+        savedId = Number(created?.id) || undefined;
         message.success('Appointment created');
       }
     } catch (err: any) {
@@ -77,25 +82,27 @@ const AppointmentListPage: React.FC = () => {
     setEditAppointment(null);
     fetchAppointments();
     setCalendarKey(k => k + 1);
-    setSyncAppointment({
+    // Re-read the saved appointment so the invite and the WhatsApp message get the patient's
+    // e-mail, phone and the treatment name.
+    const saved: Appointment | null = savedId
+      ? await appointmentsApi.getById(savedId).catch(() => null)
+      : null;
+    setSyncAppointment(saved || {
       patient_name: meta?.patient_name || editAppointment?.patient_name,
+      patient_email: editAppointment?.patient_email,
+      patient_phone: editAppointment?.patient_phone,
       treatment_name: meta?.treatment_name || editAppointment?.treatment_name,
       appointment_date: data.appointment_date,
       duration_minutes: data.duration_minutes || 30,
       notes: data.notes,
     });
+    setSyncMessageType('confirmation');
     setCalendarSyncOpen(true);
   };
 
-  const openCalendarSync = (appt: Appointment) => {
-    setSyncAppointment({
-      patient_name: appt.patient_name,
-      patient_email: appt.patient_email,
-      treatment_name: appt.treatment_name,
-      appointment_date: appt.appointment_date,
-      duration_minutes: appt.duration_minutes,
-      notes: appt.notes,
-    });
+  const openCalendarSync = (appt: Appointment, type: WhatsAppMessageType = 'confirmation') => {
+    setSyncAppointment(appt);
+    setSyncMessageType(type);
     setCalendarSyncOpen(true);
   };
 
@@ -136,11 +143,14 @@ const AppointmentListPage: React.FC = () => {
     },
     { title: 'Notes', dataIndex: 'notes', ellipsis: true },
     {
-      title: 'Actions', width: 130, key: 'actions',
+      title: 'Actions', width: 165, key: 'actions',
       render: (_: any, r: Appointment) => (
         <Space>
-          <Tooltip title="Sync to Calendar">
+          <Tooltip title="Send calendar invite">
             <Button size="small" icon={<CalendarOutlined />} onClick={() => openCalendarSync(r)} />
+          </Tooltip>
+          <Tooltip title="Send WhatsApp reminder">
+            <Button size="small" icon={<WhatsAppOutlined style={{ color: '#25d366' }} />} onClick={() => openCalendarSync(r, 'reminder')} />
           </Tooltip>
           <Tooltip title="Edit">
             <Button size="small" icon={<EditOutlined />} onClick={() => { setEditAppointment(r); setModalOpen(true); }} />
@@ -238,6 +248,7 @@ const AppointmentListPage: React.FC = () => {
         open={calendarSyncOpen}
         onClose={() => { setCalendarSyncOpen(false); setSyncAppointment(null); }}
         appointment={syncAppointment}
+        initialMessageType={syncMessageType}
       />
     </div>
   );

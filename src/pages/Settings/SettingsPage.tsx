@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { Card, Form, Input, Button, message, Space, Row, Col, Modal, Switch } from 'antd';
+import { Card, Form, Input, Button, message, Space, Row, Col, Modal, Switch, Divider } from 'antd';
 import { SaveOutlined, CloudDownloadOutlined, CloudUploadOutlined, UploadOutlined, ExclamationCircleOutlined, DeleteOutlined, UserOutlined, DownloadOutlined, FolderOpenOutlined, BookOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { settingsApi, backupApi } from '../../api/finance.api';
 import { treatmentsApi } from '../../api/treatments.api';
 import { appApi, errorText } from '../../api/clinic.api';
+import { WHATSAPP_SETTING_DEFAULTS } from '../../utils/appointmentShare';
 
 const SettingsPage: React.FC = () => {
   const navigate = useNavigate();
@@ -21,7 +22,12 @@ const SettingsPage: React.FC = () => {
       settingsApi.getAll(),
       backupApi.lastInfo(),
     ]).then(([settings, backup]) => {
-      form.setFieldsValue(settings);
+      // WhatsApp settings that were never saved (or were cleared) show their defaults
+      const withDefaults: Record<string, string> = { ...settings };
+      for (const [key, value] of Object.entries(WHATSAPP_SETTING_DEFAULTS)) {
+        if (!withDefaults[key]) withDefaults[key] = value;
+      }
+      form.setFieldsValue(withDefaults);
       setLastBackup(backup);
       setLoading(false);
     });
@@ -153,6 +159,18 @@ const SettingsPage: React.FC = () => {
                   </Form.Item>
                 </Col>
               </Row>
+              <Divider plain titlePlacement="start">WhatsApp appointment messages</Divider>
+              <Form.Item name="whatsapp_country_code" label="Default country code"
+                extra="Added to patient phone numbers that are saved without a country code (India is 91).">
+                <Input prefix="+" style={{ width: 140 }} maxLength={4} />
+              </Form.Item>
+              <Form.Item name="whatsapp_confirmation_template" label="Booking confirmation message">
+                <Input.TextArea rows={3} />
+              </Form.Item>
+              <Form.Item name="whatsapp_reminder_template" label="Reminder message"
+                extra="Placeholders: {patient}, {clinic}, {date}, {time}, {treatment}, {doctor}, {phone} (clinic phone).">
+                <Input.TextArea rows={3} />
+              </Form.Item>
               <Space>
                 <Button type="primary" icon={<SaveOutlined />} onClick={handleSave}>Save Settings</Button>
                 <Button icon={<UserOutlined />} onClick={() => navigate('/doctor-profile')}>Doctor's Profile</Button>

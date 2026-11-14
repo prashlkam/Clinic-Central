@@ -1,29 +1,29 @@
 import React, { useEffect, useState } from 'react';
-import { Modal, Button, Space, Typography, Divider } from 'antd';
-import { GoogleOutlined, WindowsOutlined, CalendarOutlined, DownloadOutlined } from '@ant-design/icons';
+import { Modal, Button, Space, Typography, Divider, Input, Segmented, Alert } from 'antd';
+import { GoogleOutlined, WindowsOutlined, CalendarOutlined, DownloadOutlined, WhatsAppOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { doctorApi } from '../../api/doctor.api';
+import { settingsApi } from '../../api/finance.api';
+import {
+  ShareableAppointment, WhatsAppMessageType, WHATSAPP_SETTING_DEFAULTS,
+  buildWhatsAppUrl, fillTemplate, toWhatsAppNumber,
+} from '../../utils/appointmentShare';
 
 const { Text, Paragraph } = Typography;
 
 interface CalendarSyncProps {
   open: boolean;
   onClose: () => void;
-  appointment: {
-    patient_name?: string;
-    patient_email?: string;
-    treatment_name?: string;
-    appointment_date: string;
-    duration_minutes: number;
-    notes?: string | null;
-  } | null;
+  appointment: ShareableAppointment | null;
+  /** which WhatsApp message is preselected when the dialog opens */
+  initialMessageType?: WhatsAppMessageType;
 }
 
 function formatDateForGoogle(date: string): string {
   return dayjs(date).format('YYYYMMDDTHHmmss');
 }
 
-function buildGoogleCalendarUrl(appt: CalendarSyncProps['appointment'], doctorEmail?: string): string {
+function buildGoogleCalendarUrl(appt: CalendarSyncProps['appointment'], doctorEmail?: string, location?: string): string {
   if (!appt) return '';
   const start = formatDateForGoogle(appt.appointment_date);
   const end = formatDateForGoogle(
@@ -42,7 +42,9 @@ function buildGoogleCalendarUrl(appt: CalendarSyncProps['appointment'], doctorEm
     details,
   });
 
-  // Add attendees: doctor and patient
+  if (location) params.set('location', location);
+
+  // Guests: Google e-mails them the invitation when the event is saved
   const attendees = [doctorEmail, appt.patient_email].filter(Boolean).join(',');
   if (attendees) params.set('add', attendees);
 
@@ -116,46 +118,77 @@ function downloadIcsFile(appt: CalendarSyncProps['appointment'], doctorEmail?: s
   URL.revokeObjectURL(url);
 }
 
-const CalendarSyncModal: React.FC<CalendarSyncProps> = ({ open, onClose, appointment }) => {
+const CalendarSyncModal: React.FC<CalendarSyncProps> = ({ open, onClose, appointment, initialMessageType = 'confirmation' }) => {
   const [doctorEmail, setDoctorEmail] = useState<string | undefined>();
   const [doctorName, setDoctorName] = useState<string | undefined>();
+  const [settings, setSettings] = useState<Record<string, string>>({});
+  const [messageType, setMessageType] = useState<WhatsAppMessageType>(initialMessageType);
+  const [messageText, setMessageText] = useState('');
 
   useEffect(() => {
     if (open) {
+      setMessageType(initialMessageType);
       doctorApi.getProfile().then((profile: any) => {
         if (profile?.email) setDoctorEmail(profile.email);
         if (profile?.name) setDoctorName(profile.name);
-      });
+      }).catch(() => undefined);
+      settingsApi.getAll().then((s: Record<string, string>) => setSettings(s || {})).catch(() => undefined);
     }
-  }, [open]);
+  }, [open, initialMessageType]);
+
+  // (Re)write the message whenever the appointment, the kind of message or the templates change
+  useEffect(() => {
+    if (!open || !appointment) return;
+    const key = messageType === 'reminder' ? 'whatsapp_reminder_template' : 'whatsapp_confirmation_template';
+    const template = settings[key] || WHATSAPP_SETTING_DEFAULTS[key];
+    setMessageText(fillTemplate(template, appointment, {
+      clinicName: settings.clinic_name,
+      clinicPhone: settings.clinic_phone,
+      doctorName,
+    }));
+  }, [open, appointment, messageType, settings, doctorName]);
 
   if (!appointment) return null;
 
   const dateStr = dayjs(appointment.appointment_date).format('DD MMM YYYY, hh:mm A');
+  const location = [settings.clinic_name, settings.clinic_address].filter(Boolean).join(', ');
+  const whatsAppNumber = toWhatsAppNumber(
+    appointment.patient_phone,
+    settings.whatsapp_country_code || WHATSAPP_SETTING_DEFAULTS.whatsapp_country_code,
+  );
 
   return (
     <Modal
-      title={<><CalendarOutlined /> Sync to Calendar</>}
+      title={<><CalendarOutlined /> Calendar invite & WhatsApp reminder</>}
       open={open}
       onCancel={onClose}
       footer={
-        <Button onClick={onClose}>Skip</Button>
+        <Button onClick={onClose}>Close</Button>
       }
-      width={440}
+      width={480}
     >
       <Paragraph type="secondary" style={{ marginBottom: 16 }}>
         Appointment for <Text strong>{appointment.patient_name}</Text> on <Text strong>{dateStr}</Text>
       </Paragraph>
 
+      <Divider plain titlePlacement="start" style={{ margin: '0 0 12px' }}>Calendar</Divider>
+
       <Space direction="vertical" style={{ width: '100%' }} size="middle">
-        <Button
-          block
-          size="large"
-          icon={<GoogleOutlined />}
-          onClick={() => window.open(buildGoogleCalendarUrl(appointment, doctorEmail), '_blank')}
-        >
-          Add to Google Calendar
-        </Button>
+        <div>
+          <Button
+            block
+            size="large"
+            icon={<GoogleOutlined />}
+            onClick={() => window.open(buildGoogleCalendarUrl(appointment, doctorEmail, location), '_blank')}
+          >
+            Send Google Calendar invite
+          </Button>
+          <Text type="secondary" style={{ fontSize: 12 }}>
+            {appointment.patient_email
+              ? `Opens Google Calendar with ${appointment.patient_email} as a guest. Press Save there and choose "Send" to e-mail the invitation.`
+              : 'This patient has no e-mail address, so the event is only added to your own calendar. Add an e-mail to the patient record to send an invitation.'}
+          </Text>
+        </div>
 
         <Button
           block
@@ -175,6 +208,48 @@ const CalendarSyncModal: React.FC<CalendarSyncProps> = ({ open, onClose, appoint
         >
           Download .ics file (Outlook / Apple Calendar)
         </Button>
+      </Space>
+
+      <Divider plain titlePlacement="start" style={{ margin: '20px 0 12px' }}>WhatsApp</Divider>
+
+      <Space direction="vertical" style={{ width: '100%' }} size="small">
+        <Segmented
+          block
+          value={messageType}
+          onChange={(v) => setMessageType(v as WhatsAppMessageType)}
+          options={[
+            { value: 'confirmation', label: 'Booking confirmation' },
+            { value: 'reminder', label: 'Reminder' },
+          ]}
+        />
+        <Input.TextArea
+          rows={4}
+          value={messageText}
+          onChange={(e) => setMessageText(e.target.value)}
+        />
+        {!whatsAppNumber && (
+          <Alert
+            type="warning"
+            showIcon
+            message={appointment.patient_phone
+              ? `"${appointment.patient_phone}" is not a usable phone number.`
+              : 'This patient has no phone number.'}
+          />
+        )}
+        <Button
+          block
+          size="large"
+          type="primary"
+          icon={<WhatsAppOutlined />}
+          disabled={!whatsAppNumber || !messageText.trim()}
+          style={whatsAppNumber && messageText.trim() ? { background: '#25d366', borderColor: '#25d366' } : undefined}
+          onClick={() => whatsAppNumber && window.open(buildWhatsAppUrl(whatsAppNumber, messageText.trim()), '_blank')}
+        >
+          Send on WhatsApp{whatsAppNumber ? ` to +${whatsAppNumber}` : ''}
+        </Button>
+        <Text type="secondary" style={{ fontSize: 12 }}>
+          Opens WhatsApp with the message typed in for this patient. Press Send there. The wording can be changed in Settings.
+        </Text>
       </Space>
     </Modal>
   );
